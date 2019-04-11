@@ -1,0 +1,1865 @@
+{smcl}
+{com}{sf}{ul off}{txt}{.-}
+      name:  {res}<unnamed>
+       {txt}log:  {res}X:/OneDrive - The University of the West Indies/repo_datagroup/repo_p120\who_score_amr_b.smcl
+  {txt}log type:  {res}smcl
+ {txt}opened on:  {res}26 Mar 2019, 07:26:38
+{txt}
+{com}. ** HEADER -----------------------------------------------------
+. 
+. *******************************************************************************
+. ** BACKGROUND
+. *******************************************************************************
+. ** WHO risk charts indicate 10-year risk of a fatal or non-fatal major cardiovascular event
+. ** (myocardial infarction or stroke), according to age, sex, blood pressure, smoking
+. ** status, total blood cholesterol and presence or absence of diabetes mellitus for 14 WHO
+. ** epidemiological sub-regions.
+. **
+. ** There are two sets of charts. One set can be used in settings where blood cholesterol can
+. ** be measured. The other set is for settings in which blood cholesterol cannot be measured.
+. ** Both sets are available according to the 14 WHO epidemiological sub-regions.
+. ** Each chart can only be used in countries of the specific WHO epidemiological sub-region,
+. ** e.g. The charts for South East Asia sub-region B (SEAR B) can only be used in Indonesia,
+. ** Sri Lanka and Thailand.
+. **
+. ** Different charts exist for Americas country groupings:
+. ** AMR  A       Canada, Cuba, United States of America
+. ** AMR  B       Antigua and Barbuda, Argentina, Bahamas, Barbados, Belize, Brazil, Chile, Colombia, Costa Rica, Dominica,
+. **                      Dominican Republic, El Salvador, Grenada, Guyana, Honduras, Jamaica, Mexico, Panama, Paraguay,
+. **                      Saint Kitts and Newis, Saint Lucia, Saint Vincent and the Grenadines, Suriname, Trinidad and Tobago,
+. **                      Uruguay, Venezuela
+. ** AMR  D       Bolivia, Ecuador, Guatemala, Haiti, Nicaragua, Peru
+. **
+. ** Here we implement Risk Charts for AMR-B, assuming the availability of cholesterol.
+. 
+. *******************************************************************************
+. ** 26-MAR-2019
+. ** NOTE
+. *******************************************************************************
+. ** This DO file was built to construct the WHO risk charts
+. ** Once the various risk cells have been allocated, I think (to be confirmed) that the WHO
+. ** risk score is categorical - groups of % risk - rather than an exact % score
+. ** There are FIVE risk categories:
+. **                      category 1 -->  <10% ten-year risk
+. **                      category 2 -->  10 - <20% ten-year risk
+. **                      category 3 -->  20 - <30% ten-year risk
+. **                      category 4 -->  30 - <40% ten-year risk
+. **                      category 5 -->  >=40% ten-year risk
+. ** For more details see: Collins (2016) - whoishRisk (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5345772/)
+. *******************************************************************************
+. 
+. 
+. ** Health of the Nation as example
+. use "`datapath'/version01/1-input/hotn_v41RPAQ", clear
+{txt}(HotN v41 - Prepared by IRH)
+
+{com}. 
+. ** Tabulate basic information on the required variables
+. codebook sex agey smoke smoke_daily sbp1 sbp2 sbp3 tchol fplas, compact
+{res}
+{txt}Variable      Obs Unique      Mean       Min       Max  Label
+{txt}{hline 80}
+{txt}sex        {res}  1234      2  1.380875         1         2  {txt}participant sex
+{txt}agey       {res}  1234   1195  52.38923  25.08419  95.67693  {txt}Age in years
+{txt}smoke      {res}  1234      2  1.924635         1         2  {txt}Do you currently smoke
+{txt}smoke_daily{res}    93      2  1.247312         1         2  {txt}currently smoke any t...
+{txt}sbp1       {res}  1232    119   133.642        89       238  {txt}Systolic blood pressu...
+{txt}sbp2       {res}  1232    113  131.2865        83       228  {txt}Systolic blood pressu...
+{txt}sbp3       {res}  1231    111  130.3664        87       220  {txt}Systolic blood pressu...
+{txt}tchol      {res}  1115    252   4.40074     2.044    11.999  {txt}Total cholesterol res...
+{txt}fplas      {res}  1110     97  5.676126       2.3      22.8  {txt}Fasting plasma glucos...
+{txt}{hline 80}
+
+{com}. 
+. ** Set as survey dataset
+. svyset ed [pweight=wfinal1_ad], strata(region)
+
+      {txt}pweight:{col 16}{res}wfinal1_ad
+          {txt}VCE:{col 16}{res}linearized
+  {txt}Single unit:{col 16}{res}missing
+     {txt}Strata 1:{col 16}{res}region
+         {txt}SU 1:{col 16}{res}ed
+        {txt}FPC 1:{col 16}<zero>
+{p2colreset}{...}
+
+{com}. 
+. **************************************************************
+. ** 001.         PREPARING VARIABLES REQUIRED FOR RISK SCORE
+. **************************************************************
+. 
+. ** SEX (0=female, 1=male)
+. gen sex_m1_f0=.
+{txt}(1,234 missing values generated)
+
+{com}. replace sex_m1_f0 =1 if sex==2
+{txt}(470 real changes made)
+
+{com}. replace sex_m1_f0 =0 if sex==1
+{txt}(764 real changes made)
+
+{com}. sort sex_m1_f0
+{txt}
+{com}. by sex_m1_f0: sum sex
+
+{txt}{hline}
+-> sex_m1_f0 = 0
+
+    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 9}sex {c |}{res}        764           1           0          1          1
+
+{txt}{hline}
+-> sex_m1_f0 = 1
+
+    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 9}sex {c |}{res}        470           2           0          2          2
+
+{txt}
+{com}. label define sex_m1_f0 0 "women" 1 "men", modify
+{txt}
+{com}. label values sex_m1_f0 sex_m1_f0
+{txt}
+{com}. 
+. ** WHO-defined age groups for risk score
+. generate age4=.
+{txt}(1,234 missing values generated)
+
+{com}. replace age4=40 if agey<50
+{txt}(583 real changes made)
+
+{com}. replace age4=50 if agey>=50 & agey<60
+{txt}(277 real changes made)
+
+{com}. replace age4=60 if agey>=60 & agey<70
+{txt}(191 real changes made)
+
+{com}. replace age4=70 if agey>=70 & agey<99
+{txt}(183 real changes made)
+
+{com}. sort age4
+{txt}
+{com}. by age4: sum agey
+
+{txt}{hline}
+-> age4 = 40
+
+    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 8}agey {c |}{res}        583    39.23193    6.616197   25.08419   49.99863
+
+{txt}{hline}
+-> age4 = 50
+
+    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 8}agey {c |}{res}        277    54.59647    2.811963    50.0178   59.83847
+
+{txt}{hline}
+-> age4 = 60
+
+    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 8}agey {c |}{res}        191    64.59036    2.924275   60.00274   69.97947
+
+{txt}{hline}
+-> age4 = 70
+
+    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 8}agey {c |}{res}        183    78.23015    5.524104    70.0041   95.67693
+
+{txt}
+{com}. 
+. ** Cholesterol groups
+. gen chol_mm=.
+{txt}(1,234 missing values generated)
+
+{com}. replace chol_mm=4 if tchol <5
+{txt}(862 real changes made)
+
+{com}. replace chol_mm=5 if tchol >=5 & tchol <6
+{txt}(207 real changes made)
+
+{com}. replace chol_mm=6 if tchol >=6 & tchol <7
+{txt}(39 real changes made)
+
+{com}. replace chol_mm=7 if tchol >=7 & tchol <8
+{txt}(5 real changes made)
+
+{com}. replace chol_mm=8 if tchol >=8 & tchol <15
+{txt}(2 real changes made)
+
+{com}. sort chol_mm
+{txt}
+{com}. by chol_mm: sum tchol
+
+{txt}{hline}
+-> chol_mm = 4
+
+    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 7}tchol {c |}{res}        862    4.050852    .5883209      2.044      4.991
+
+{txt}{hline}
+-> chol_mm = 5
+
+    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 7}tchol {c |}{res}        207    5.366367      .26409      5.016      5.999
+
+{txt}{hline}
+-> chol_mm = 6
+
+    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 7}tchol {c |}{res}         39    6.336718     .238541          6      6.878
+
+{txt}{hline}
+-> chol_mm = 7
+
+    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 7}tchol {c |}{res}          5       7.401    .2084922      7.112       7.68
+
+{txt}{hline}
+-> chol_mm = 8
+
+    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 7}tchol {c |}{res}          2      10.008    2.815699      8.017     11.999
+
+{txt}{hline}
+-> chol_mm = .
+
+    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 7}tchol {c |}{res}          0
+
+{txt}
+{com}. 
+. ** Current smoker (0=NO, 1=YES)
+. ** NOTE: WHO definition also includes those that have quit in past 12 months
+. gen smoker_y1_n0=.
+{txt}(1,234 missing values generated)
+
+{com}. replace smoker_y1_n0 = 1 if smoke==1
+{txt}(93 real changes made)
+
+{com}. replace smoker_y1_n0 = 0 if smoke==2
+{txt}(1,141 real changes made)
+
+{com}. sort smoker_y1_n0
+{txt}
+{com}. by smoker_y1_n0: sum smoke
+
+{txt}{hline}
+-> smoker_y1_n0 = 0
+
+    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 7}smoke {c |}{res}      1,141           2           0          2          2
+
+{txt}{hline}
+-> smoker_y1_n0 = 1
+
+    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 7}smoke {c |}{res}         93           1           0          1          1
+
+{txt}
+{com}. 
+. ** Systolic Blood Pressure
+. gen sbp23=(sbp2+sbp3)/2
+{txt}(3 missing values generated)
+
+{com}. sum sbp*
+
+{txt}    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 8}sbp1 {c |}{res}      1,232     133.642    22.06771         89        238
+{txt}{space 8}sbp2 {c |}{res}      1,232    131.2865    21.20225         83        228
+{txt}{space 8}sbp3 {c |}{res}      1,231    130.3664    20.25379         87        220
+{txt}{space 7}sbp23 {c |}{res}      1,231    130.8387    20.37725         89        224
+{txt}
+{com}. gen sys = .
+{txt}(1,234 missing values generated)
+
+{com}. replace sys = 120 if sbp23<140
+{txt}(927 real changes made)
+
+{com}. replace sys = 140 if sbp23>=140 & sbp23<160
+{txt}(194 real changes made)
+
+{com}. replace sys = 160 if sbp23>=160 & sbp23<180
+{txt}(75 real changes made)
+
+{com}. replace sys = 180 if sbp23>=180 & sbp23<400
+{txt}(35 real changes made)
+
+{com}. sort sys
+{txt}
+{com}. by sys: sum sbp23
+
+{txt}{hline}
+-> sys = 120
+
+    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 7}sbp23 {c |}{res}        927    121.7319    11.22183         89      139.5
+
+{txt}{hline}
+-> sys = 140
+
+    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 7}sbp23 {c |}{res}        194     148.616    5.649586        140      159.5
+
+{txt}{hline}
+-> sys = 160
+
+    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 7}sbp23 {c |}{res}         75       168.3    5.542831        160      179.5
+
+{txt}{hline}
+-> sys = 180
+
+    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 7}sbp23 {c |}{res}         35    193.2286    13.29935        180        224
+
+{txt}{hline}
+-> sys = .
+
+    Variable {c |}        Obs        Mean    Std. Dev.       Min        Max
+{hline 13}{c +}{hline 57}
+{space 7}sbp23 {c |}{res}          0
+
+{txt}
+{com}. 
+. 
+. ** Diabetes (Self Report AND Fasting Plasma)
+. ** LAB DEFINITION
+. gen diab_lab1 = 0
+{txt}
+{com}. replace diab_lab1 = 1 if (fplas>=7.0 & fplas<.)
+{txt}(127 real changes made)
+
+{com}. replace diab_lab1=. if fplas==.
+{txt}(124 real changes made, 124 to missing)
+
+{com}. label define diab_lab1 0 "no" 1 "yes",modify
+{txt}
+{com}. label values diab_lab1 diab_lab1
+{txt}
+{com}. label var diab_lab1 "Laboratory confirmed diabetes (Fasting plasma Glucose>=7.0mmol/l)"
+{txt}
+{com}. ** DIABETES DEFINITION
+. ** 12 women are self-report but are gestational diabetes (1 of these women comes back into diabetes definition due to fplas>=7)
+. replace diab = 0 if diab==1 & sex==1 & diabp==1
+{txt}(12 real changes made)
+
+{com}. gen dm_y1_n0 = 0
+{txt}
+{com}. replace dm_y1_n0 = 1 if diab_lab1==1 | diab==1
+{txt}(235 real changes made)
+
+{com}. replace dm_y1_n0 = . if diab_lab1==. & diab==.
+{txt}(0 real changes made)
+
+{com}. replace dm_y1_n0 = . if diab_lab1==. & diab==2
+{txt}(103 real changes made, 103 to missing)
+
+{com}. replace dm_y1_n0 = . if diab_lab1==0 & diab==.
+{txt}(1 real change made, 1 to missing)
+
+{com}. label define dm_y1_n0 0 "no" 1 "yes",modify
+{txt}
+{com}. label values dm_y1_n0 dm_y1_n0
+{txt}
+{com}. label var dm_y1_n0 "Diabetes (yes/no). Self-report and lab confirmed"
+{txt}
+{com}. svy: tab dm_y1_n0 sex_m1_f0, percent ci col
+{txt}(running tabulate on estimation sample)
+{res}
+{txt}{col 1}Number of strata{col 20}= {res}        4{txt}{col 49}Number of obs{col 67}= {res}     1,130
+{txt}{col 1}Number of PSUs{col 20}= {res}       45{txt}{col 49}Population size{col 67}={res} 1,120.1947
+{txt}{col 49}Design df{col 67}= {res}        41
+
+{txt}{hline 10}{c TT}{hline 44}
+Diabetes  {c |}
+(yes/no). {c |}
+Self-repo {c |}
+rt and    {c |}
+lab       {c |}                  sex_m1_f0                 
+confirmed {c |}         women            men          Total
+{hline 10}{c +}{hline 44}
+       no {c |}         {res}78.99          84.07          81.34
+          {txt}{c |} {res}[75.81,81.85]  [79.17,87.99]  [78.56,83.83]
+          {txt}{c |} 
+      yes {c |}         {res}21.01          15.93          18.66
+          {txt}{c |} {res}[18.15,24.19]  [12.01,20.83]  [16.17,21.44]
+          {txt}{c |} 
+    Total {c |}           {res}100            100            100
+          {txt}{c |}              {res}                              
+{txt}{hline 10}{c BT}{hline 44}
+  Key:  {col 1}{res}column percentage
+{col 9}[95% confidence interval for column percentage]
+
+{txt}  Pearson:
+{col 5}Uncorrected{col 19}chi2({res}1{txt}){col 35}= {res}   4.7748
+{txt}{col 5}Design-based{col 19}F({res}1{txt}, {res}41{txt}){col 35}= {res}   3.3202{col 51}{txt}P = {res}0.0757
+{txt}
+{com}. 
+. 
+. **************************************************************
+. ** 002.         KEEP MINIMAL DATASET REQUIRED FOR RISK SCORE
+. **              GENERATE 'RISK CELLS' INDICATOR (1 to 640)
+. **************************************************************
+. ** There are 640 cells in the WHO risk chart, each one representing a unique grouping of the 5 variables
+. ** sex(2)  x  dm(2)  x  smoker(2)  x  age(4)  x  sys(4)  x  chol(5)
+. ** 2 x 2 x 2 x 4 x 4 x 5  =  640 cells
+. 
+. ** Restrict dataset to required variables
+. keep sex_m1_f0 age4 chol_mm smoker_y1_n0 sys dm_y1_n0 wfinal1_ad region ed agey stroke angina mi hf
+{txt}
+{com}. ** Restrict dataset to those with complete information
+. keep if sex_m1_f0<. & age4<. & chol_mm<. & smoker_y1_n0<. & sys<. & dm_y1_n0<.
+{txt}(128 observations deleted)
+
+{com}. 
+. ** Generate rectangular matrix of values, running from 1 to 640
+. fillin dm_y1_n0 sex_m1_f0 smoker_y1_n0 age4 sys chol_mm
+{txt}
+{com}. ** Generate indicator (1 to 640) representing the 640 individual cells in the WHO risk chart
+. egen wc = group(dm_y1_n0 sex_m1_f0 smoker_y1_n0 age4 sys chol_mm )
+{txt}
+{com}. label var wc "WHO cells (1 to 640)"
+{txt}
+{com}. ** Sort and order
+. sort wc chol_mm sys age4 smoker_y1_n0 sex_m1_f0 dm_y1_n0
+{txt}
+{com}. order wc chol_mm sys age4 smoker_y1_n0 sex_m1_f0 dm_y1_n0
+{txt}
+{com}. ** Count indicator --> from reversing the _fillin indicator
+. recode _fillin 1=0 0=1, gen(pcount)
+{txt}(1594 differences between _fillin and pcount)
+
+{com}. 
+. ** Save out an uncollapsed temporary file. This temporary file is used when analysing
+. ** Eventually, we would keep this as a permanent file for analysts
+. ** Can allow the application of WHO risk scores to other world regions
+. tempfile who_risk_001
+{txt}
+{com}. save `who_risk_001'
+{txt}file C:\Users\20003146\AppData\Local\Temp\ST_2a30_000001.tmp saved
+
+{com}. 
+. 
+. **************************************************************************************************************
+. ** 003.         PLOT the 640 risk cells (for reference purposes --> aids checking of code accuracy)
+. **              REFERENCE FIGURES 1 (A/B)  (without diabetes --> if dm_y1_n0==0 --> FIG 1A)   (with diabetes --> if dm_y1_n0==1 --> FIG 1B)
+. **************************************************************************************************************
+. ** Gen y-axis groups (age and SBP)
+. egen yax = group(age4 sys)
+{txt}
+{com}. ** Gen x-axis groups (sex smoker cholesterol)
+. egen xax = group(sex_m1_f0 smoker_y1_n0 chol)
+{txt}
+{com}. 
+. 
+. #delimit ;
+{txt}delimiter now ;
+{com}. gen y0 = 0.5;
+{txt}
+{com}.  gen y1 = 4.5;
+{txt}
+{com}.  gen y2 = 8.5;
+{txt}
+{com}.  gen y3 = 12.5;
+{txt}
+{com}.  gen y4 = 16.5;
+{txt}
+{com}. gen x0 = 1;
+{txt}
+{com}.    gen x1 = 6;
+{txt}
+{com}.    gen x2 = 11;
+{txt}
+{com}.   gen x3 = 16;
+{txt}
+{com}.    gen x4 = 21;
+{txt}
+{com}.         gr twoway
+>                 /// NO DIABETES (LOWER WHO CHART)
+>                   (sc yax xax if dm_y1_n0==1, msymbol(none) mlab(wc) mlabsize(vsmall) mc(gs0))
+>                   (line y0 xax, lp("l") lc(gs10)) (line y1 xax, lp("l") lc(gs10)) (line y2 xax, lp("l") lc(gs10)) (line y3 xax, lp("l") lc(gs10)) (line y4 xax, lp("l") lc(gs10))
+>                   (line yax x0, lp("l") lc(gs10)) (line yax x1, lp("l") lc(gs10)) (line yax x2, lp("l") lc(gs10)) (line yax x3, lp("l") lc(gs10)) (line yax x4, lp("l") lc(gs10))
+>                   ,
+>                         plotregion(c(gs16) ic(gs16) ilw(thin) lw(thin))
+>                         graphregion(color(gs16) ic(gs16) ilw(thin) lw(thin))
+>                         ysize(4)
+> 
+>                         /// SBP TEXT
+>                         text(1 21.5 "120", place(e) size(small)) text(2 21.5 "140", place(e) size(small))
+>                         text(3 21.5 "160", place(e) size(small)) text(4 21.5 "180", place(e) size(small))
+>                         text(5 21.5 "120", place(e) size(small)) text(6 21.5 "140", place(e) size(small))
+>                         text(7 21.5 "160", place(e) size(small)) text(8 21.5 "180", place(e) size(small))
+>                         text(9 21.5 "120", place(e) size(small)) text(10 21.5 "140", place(e) size(small))
+>                         text(11 21.5 "160", place(e) size(small)) text(12 21.5 "180", place(e) size(small))
+>                         text(13 21.5 "120", place(e) size(small)) text(14 21.5 "140", place(e) size(small))
+>                         text(15 21.5 "160", place(e) size(small)) text(16 21.5 "180", place(e) size(small))
+> 
+>                         /// AGE TEXT
+>                         text(2.5 0 "40", place(e) size(small)) text(6.5 0 "50", place(e) size(small))
+>                         text(10.5 0 "60", place(e) size(small)) text(14.5 0 "70", place(e) size(small))
+> 
+>                         /// CHOLESTEROL TEXT
+>                         text(0 1.2 "4", place(e) size(small)) text(0 2.2 "5", place(e) size(small))
+>                         text(0 3.2 "6", place(e) size(small)) text(0 4.2 "7", place(e) size(small)) text(0 5.2 "8", place(e) size(small))
+>                         text(0 6.2 "4", place(e) size(small)) text(0 7.2 "5", place(e) size(small))
+>                         text(0 8.2 "6", place(e) size(small)) text(0 9.2 "7", place(e) size(small)) text(0 10.2 "8", place(e) size(small))
+>                         text(0 11.4 "4", place(e) size(small)) text(0 12.4 "5", place(e) size(small))
+>                         text(0 13.4 "6", place(e) size(small)) text(0 14.4 "7", place(e) size(small)) text(0 15.4 "8", place(e) size(small))
+>                         text(0 16.4 "4", place(e) size(small)) text(0 17.4 "5", place(e) size(small))
+>                         text(0 18.4 "6", place(e) size(small)) text(0 19.4 "7", place(e) size(small)) text(0 20.4 "8", place(e) size(small))
+> 
+>                         /// SBP title
+>                         text(9.5 24 "SBP (mm Hg)",  place(c) orient(rvertical) size(medsmall))
+>                         /// AGE title
+>                         text(9.5 -1 "Age (years)",  place(c) orient(vertical) size(medsmall))
+>                         /// CHOLESTEROL title
+>                         text(-1.5 10 "Cholesterol (mmol/L)", place(c) orient(horizontal) size(medsmall))
+> 
+>                         /// SMOKER text
+>                         text(17 3.5 "Non-smoker", place(c) size(small))
+>                         text(17 8.5 "Smoker", place(c) size(small))
+>                         text(17 13.5 "Non-smoker", place(c) size(small))
+>                         text(17 18.5 "Smoker", place(c) size(small))
+> 
+>                         /// SEX text
+>                         text(19 6 "Male", place(c) size(medsmall))
+>                         text(19 16 "Female", place(c) size(medsmall))
+> 
+>                         xscale(off lw(vthin) range(-2(0.5)24))
+>                         yscale(off lw(vthin) range(-2(0.5)19))
+>                         legend(off)
+>                         name(Fig1_RiskCells)
+>                         ;
+{res}{txt}
+{com}. #delimit cr
+{txt}delimiter now cr
+{com}. 
+. 
+. 
+. **************************************************************************************************************
+. ** 004.         GENERATE CVD risk categories
+. **              There are 5 risk categories
+. **                      category 1 -->  <10% ten-year risk
+. **                      category 2 -->  10 - <20% ten-year risk
+. **                      category 3 -->  20 - <30% ten-year risk
+. **                      category 4 -->  30 - <40% ten-year risk
+. **                      category 5 -->  >=40% ten-year risk
+. **************************************************************************************************************
+. 
+. gen wr = .
+{txt}(1,594 missing values generated)
+
+{com}. label var wr "WHO risk categories (1 to 5)"
+{txt}
+{com}. 
+. ***************************************************************************************************
+. ** WITHOUT DIABETES
+. ***************************************************************************************************
+. #delimit ;
+{txt}delimiter now ;
+{com}. ** AMR (Region B)   WITHOUT DIABETES;
+. replace wr = 1 if
+>                         /// COLUMN 1
+>                         /// WHO cells (1-20)
+>                         wc==1 | wc==2 | wc==3 | wc==4 | wc==5 | wc==6 | wc==7 | wc==8 | wc==9 | wc==11 | wc==12 | wc==13 |
+>                         /// WHO cells (21-20)
+>                         wc==21 | wc==22 | wc==23 | wc==24 | wc==25 | wc==26 | wc==27 | wc==28 | wc==29 | wc==31 | wc==32 |
+>                         /// WHO cells (41-60)
+>                         wc==41 | wc==42 | wc==43 | wc==44 | wc==45 | wc==46 | wc==47 | wc==48 |
+>                         /// WHO cells (61-80)
+>                         wc==61 | wc==62 | wc==63 | wc==66 |
+>                         /// COLUMN 2
+>                         /// WHO cells (81-100)
+>                         wc==81 | wc==82 | wc==83 | wc==84 | wc==85 | wc==86 | wc==87 | wc==88 | wc==91 |
+>                         /// WHO cells (101-120)
+>                         wc==101 | wc==102 | wc==103 | wc==104 | wc==106 | wc==107 | wc==108 |
+>                         /// WHO cells (121-140)
+>                         wc==121 | wc==122 | wc==123 | wc==126 |
+>                         /// WHO cells (141-160)
+>                         wc==141 |
+>                         /// COLUMN 3
+>                         /// WHO cells (161-180)
+>                         wc==161 | wc==162 | wc==163 | wc==164 | wc==165 | wc==166 | wc==167 | wc==168 | wc==169 | wc==171 | wc==172 | wc==173 |
+>                         /// WHO cells (181-200)
+>                         wc==181 | wc==182 | wc==183 | wc==184 | wc==185 | wc==186 | wc==187 | wc==188 | wc==189 | wc==191 | wc==192  |
+>                         /// WHO cells (201-220)
+>                         wc==201 | wc==202 | wc==203 | wc==204 | wc==205 | wc==206 | wc==207 | wc==208 | wc==209 | wc==211 | wc==212  |
+>                         /// WHO cells (221-240)
+>                         wc==221 | wc==222 | wc==223 | wc==224 | wc==226 | wc==227  |
+>                         /// COLUMN 4
+>                         /// WHO cells (241-260)
+>                         wc==241 | wc==242 | wc==243 | wc==244 | wc==245 | wc==246 | wc==247 | wc==248 | wc==251 |
+>                         /// WHO cells (261-280)
+>                         wc==261 | wc==262 | wc==263 | wc==264 | wc==266 | wc==267 | wc==268 |
+>                         /// WHO cells (281-300)
+>                         wc==281 | wc==282 | wc==283 | wc==284 | wc==286 | wc==287 |     wc==288 |
+>                         /// WHO cells (301-320)
+>                         wc==301 | wc==302
+>                         ;
+{txt}(902 real changes made)
+
+{com}. ** AMR (Region B)   WITHOUT DIABETES;
+. replace wr = 2 if
+>                         /// COLUMN 1
+>                         /// WHO cells (1-20)
+>                         wc==10 | wc==14 | wc==16 |
+>                         /// WHO cells (21-20)
+>                         wc==30 | wc==33 | wc==34 | wc==36 |
+>                         /// WHO cells (41-60)
+>                         wc==49 | wc==50 | wc==51 | wc==52 | wc==53 |
+>                         /// WHO cells (61-80)
+>                         wc==64 | wc==65 | wc==67 | wc==68 | wc==69 | wc==71 | wc==72 |
+>                         /// COLUMN 2
+>                         /// WHO cells (81-100)
+>                         wc==89 | wc==92 | wc==93 |
+>                         /// WHO cells (101-120)
+>                         wc==105 | wc==109 | wc==111 | wc==112 |
+>                         /// WHO cells (121-140)
+>                         wc==124 | wc==125 | wc==127 | wc==128 | wc==131 |
+>                         /// WHO cells (141-160)
+>                         wc==142 | wc==143 | wc==144 | wc==146 | wc==147 |
+>                         /// COLUMN 3
+>                         /// WHO cells (161-180)
+>                         wc==170 | wc==174 |
+>                         /// WHO cells (181-200)
+>                         wc==190 | wc==193 | wc==194 |
+>                         /// WHO cells (201-220)
+>                         wc==210 | wc==213 | wc==214 |
+>                         /// WHO cells (221-240)
+>                         wc==225 | wc==228 | wc==229 | wc==230 | wc==231 | wc==232 | wc==233 |
+>                         /// COLUMN 4
+>                         /// WHO cells (241-260)
+>                         wc==249 | wc==252 |
+>                         /// WHO cells (261-280)
+>                         wc==265 | wc==269 | wc==271 | wc==272 |
+>                         /// WHO cells (281-300)
+>                         wc==285 | wc==289 | wc==291 | wc==292 |
+>                         /// WHO cells (301-320)
+>                         wc==303 | wc==304 | wc==305 | wc==306 | wc==307 | wc==308 | wc==311
+>                         ;
+{txt}(83 real changes made)
+
+{com}. ** AMR (Region B)   WITHOUT DIABETES;
+. replace wr = 3 if
+>                         /// COLUMN 1
+>                         /// WHO cells (1-20)
+>                         wc==17 |
+>                         /// WHO cells (21-20)
+>                         wc==37 |
+>                         /// WHO cells (41-60)
+>                         wc==54 | wc==56 |
+>                         /// WHO cells (61-80)
+>                         wc==70 | wc==73 | wc==74 | wc==76 |
+>                         /// COLUMN 2
+>                         /// WHO cells (81-100)
+>                         wc==90 |
+>                         /// WHO cells (101-120)
+>                         wc==110 | wc==113 |
+>                         /// WHO cells (121-140)
+>                         wc==129 | wc==132 |
+>                         /// WHO cells (141-160)
+>                         wc==145 | wc==148 | wc==149 | wc==151 | wc==152 |
+>                         /// COLUMN 3
+>                         /// WHO cells (161-180)
+>                         wc==175 | wc==176 | wc==177 |
+>                         /// WHO cells (181-200)
+>                         wc==195 | wc==196 | wc==197 |
+>                         /// WHO cells (201-220)
+>                         wc==215 | wc==216 | wc==217 |
+>                         /// WHO cells (221-240)
+>                         wc==234 | wc==235 | wc==236 | wc==237 |
+>                         /// COLUMN 4
+>                         /// WHO cells (241-260)
+>                         wc==250 | wc==253 |
+>                         /// WHO cells (261-280)
+>                         wc==270 | wc==273 |
+>                         /// WHO cells (281-300)
+>                         wc==290 | wc==293 |
+>                         /// WHO cells (301-320)
+>                         wc==309 | wc==310 | wc==312 | wc==313
+>                         ;
+{txt}(48 real changes made)
+
+{com}. ** AMR (Region B)   WITHOUT DIABETES;
+. replace wr = 4 if
+>                         /// COLUMN 1
+>                         /// WHO cells (1-20)
+>                         wc==15 | wc==18 |
+>                         /// WHO cells (21-20)
+>                         wc==35 | wc==38 |
+>                         /// WHO cells (41-60)
+>                         wc==55 | wc==57 |
+>                         /// WHO cells (61-80)
+>                         wc==75 | wc==77 |
+>                         /// COLUMN 2
+>                         /// WHO cells (81-100)
+>                         wc==94 | wc==96 |
+>                         /// WHO cells (101-120)
+>                         wc==114 | wc==116 |
+>                         /// WHO cells (121-140)
+>                         wc==130 | wc==133 | wc==134 |
+>                         /// WHO cells (141-160)
+>                         wc==150 | wc==153 |
+>                         /// COLUMN 3
+>                         /// WHO cells (161-180)
+>                         wc==178 |
+>                         /// WHO cells (181-200)
+>                         wc==198 |
+>                         /// WHO cells (201-220)
+>                         wc==218 |
+>                         /// WHO cells (221-240)
+>                         wc==238 |
+>                         /// COLUMN 4
+>                         /// WHO cells (241-260)
+>                         wc==254 | wc==256 |
+>                         /// WHO cells (261-280)
+>                         wc==274 | wc==276 |
+>                         /// WHO cells (281-300)
+>                         wc==294 | wc==296 |
+>                         /// WHO cells (301-320)
+>                         wc==314 | wc==316
+>                         ;
+{txt}(29 real changes made)
+
+{com}. ** AMR (Region B)   WITHOUT DIABETES;
+. replace wr = 5 if wr==. & wc<=320;
+{txt}(61 real changes made)
+
+{com}. #delimit cr
+{txt}delimiter now cr
+{com}. 
+. 
+. ***************************************************************************************************
+. ** WITHOUT DIABETES
+. ** GRAPHIC to check coding accuracy of CVD risk groups: REFERENCE FIGURE 2
+. ***************************************************************************************************
+. #delimit ;
+{txt}delimiter now ;
+{com}. gen yax3 = yax;
+{txt}
+{com}. gen xax3 = xax;
+{txt}
+{com}. replace yax3 = yax3+2 if yax3>=17 & yax3<=20;
+{txt}(0 real changes made)
+
+{com}. replace yax3 = yax3+1.5 if yax3>=13 & yax3<=16;
+{txt}(285 real changes made)
+
+{com}. replace yax3 = yax3+1 if yax3>=9 & yax3<=12;
+{txt}(285 real changes made)
+
+{com}. replace yax3 = yax3+0.5 if yax3>=5 & yax3<=8;
+{txt}(374 real changes made)
+
+{com}. replace xax3 = xax3+2 if xax3>=16 & xax3<=21;
+{txt}(203 real changes made)
+
+{com}. replace xax3 = xax3+1.5 if xax3>=11 & xax3<=15;
+{txt}(470 real changes made)
+
+{com}. replace xax3 = xax3+1 if xax3>=6 & xax3<=10;
+{txt}(173 real changes made)
+
+{com}. replace xax3 = xax3+0.5 if xax3>=1 & xax3<=5;
+{txt}(748 real changes made)
+
+{com}.         gr twoway
+>                 /// NO DIABETES (LOWER WHO CHART)
+>                   (sc yax3 xax3 if dm_y1_n0==0 & wr==1, m(S) msize(*2.3) mfc(green*0.65) mlc(gs0) mlw(vthin))
+>                   (sc yax3 xax3 if dm_y1_n0==0 & wr==2, m(S) msize(*2.3) mfc(yellow) mlc(gs0) mlw(vthin))
+>                   (sc yax3 xax3 if dm_y1_n0==0 & wr==3, m(S) msize(*2.3) mfc(orange) mlc(gs0) mlw(vthin))
+>                   (sc yax3 xax3 if dm_y1_n0==0 & wr==4, m(S) msize(*2.3) mfc(red*0.65) mlc(gs0) mlw(vthin))
+>                   (sc yax3 xax3 if dm_y1_n0==0 & wr==5, m(S) msize(*2.3) mfc(red*1.25) mlc(gs0) mlw(vthin))
+>                   ,
+>                         plotregion(c(gs16) ic(gs16) ilw(thin) lw(thin))
+>                         graphregion(color(gs16) ic(gs16) ilw(thin) lw(thin))
+>                         ysize(5)
+> 
+>                         /// SBP TEXT
+>                         text(1 23 "120", place(e) size(small)) text(2 23 "140", place(e) size(small))
+>                         text(3 23 "160", place(e) size(small)) text(4 23 "180", place(e) size(small))
+>                         text(5.5 23 "120", place(e) size(small)) text(6.5 23 "140", place(e) size(small))
+>                         text(7.5 23 "160", place(e) size(small)) text(8.5 23 "180", place(e) size(small))
+>                         text(10 23 "120", place(e) size(small)) text(11 23 "140", place(e) size(small))
+>                         text(12 23 "160", place(e) size(small)) text(13 23 "180", place(e) size(small))
+>                         text(14.5 23 "120", place(e) size(small)) text(15.5 23 "140", place(e) size(small))
+>                         text(16.5 23 "160", place(e) size(small)) text(17.5 23 "180", place(e) size(small))
+> 
+>                         /// AGE TEXT
+>                         text(2.5 -0.2 "40", place(e) size(small)) text(6.5 -0.2 "50", place(e) size(small))
+>                         text(10.5 -0.2 "60", place(e) size(small)) text(14.5 -0.2 "70", place(e) size(small))
+> 
+>                         /// CHOLESTEROL TEXT
+>                         text(-0.25 1.2 "4", place(e) size(small)) text(-0.25 2.2 "5", place(e) size(small))
+>                         text(-0.25 3.2 "6", place(e) size(small)) text(-0.25 4.2 "7", place(e) size(small)) text(-0.25 5.2 "8", place(e) size(small))
+> 
+>                         text(-0.25 6.8 "4", place(e) size(small)) text(-0.25 7.8 "5", place(e) size(small))
+>                         text(-0.25 8.8 "6", place(e) size(small)) text(-0.25 9.8 "7", place(e) size(small)) text(-0.25 10.8 "8", place(e) size(small))
+> 
+>                         text(-0.25 12.2 "4", place(e) size(small)) text(-0.25 13.2 "5", place(e) size(small))
+>                         text(-0.25 14.2 "6", place(e) size(small)) text(-0.25 15.2 "7", place(e) size(small)) text(-0.25 16.2 "8", place(e) size(small))
+> 
+>                         text(-0.25 17.8 "4", place(e) size(small)) text(-0.25 18.8 "5", place(e) size(small))
+>                         text(-0.25 19.8 "6", place(e) size(small)) text(-0.25 20.8 "7", place(e) size(small)) text(-0.25 21.8 "8", place(e) size(small))
+> 
+>                         /// SBP title
+>                         text(9.5 25.5 "SBP (mm Hg)",  place(c) orient(rvertical) size(medsmall))
+>                         /// AGE title
+>                         text(9.5 -1 "Age (years)",  place(c) orient(vertical) size(medsmall))
+>                         /// CHOLESTEROL title
+>                         text(-1.5 11 "Cholesterol (mmol/L)", place(c) orient(horizontal) size(medsmall))
+> 
+>                         /// SMOKER text
+>                         text(19 3.5 "Non-smoker", place(c) size(small))
+>                         text(19 9 "Smoker", place(c) size(small))
+>                         text(19 15 "Non-smoker", place(c) size(small))
+>                         text(19 20.5 "Smoker", place(c) size(small))
+> 
+>                         /// SEX text
+>                         text(20.5 7 "Male", place(c) size(medsmall))
+>                         text(20.5 17 "Female", place(c) size(medsmall))
+> 
+>                         xscale(off lw(vthin) range(-2(0.5)26))
+>                         yscale(off lw(vthin) range(-2(0.5)19))
+>                         legend(off)
+>                         name(Fig2_NoDiab)
+>                         ;
+{res}{txt}
+{com}. #delimit cr
+{txt}delimiter now cr
+{com}. 
+. 
+. ***************************************************************************************************
+. ** WITH DIABETES
+. ***************************************************************************************************
+. 
+. #delimit ;
+{txt}delimiter now ;
+{com}. ** AMR (Region B)   WITH DIABETES;
+. replace wr = 1 if
+>                         /// COLUMN 1
+>                         /// WHO cells (320-340)
+>                         wc==321 | wc==322 | wc==323 | wc==324 | wc==325 | wc==326 | wc==327 | wc==328 | wc==329 | wc==331 |
+>                         /// WHO cells (341-360)
+>                         wc==341 | wc==342 | wc==343 | wc==344 | wc==346 |  wc==347 | wc==348 |
+>                         /// WHO cells (361-380)
+>                         wc==361 | wc==362 | wc==363 | wc==366 |
+>                         /// WHO cells (381-400)
+> 
+>                         /// COLUMN 2
+>                         /// WHO cells (401-420)
+>                         wc==401 | wc==402 | wc==403 | wc==404 | wc==406 | wc==407 |
+>                         /// WHO cells (421-440)
+>                         wc==421 | wc==422 | wc==423 | wc==426 |
+>                         /// WHO cells (441-460)
+>                         wc==441 |
+>                         /// WHO cells (461-480)
+> 
+>                         /// COLUMN 3
+>                         /// WHO cells (481-500)
+>                         wc==481 | wc==482 | wc==483 | wc==484 | wc==485 | wc==486 | wc==487 | wc==488 | wc==491 |
+>                         /// WHO cells (501-520)
+>                         wc==501 | wc==502 | wc==503 | wc==504 | wc==506 | wc==507 | wc==508 |
+>                         /// WHO cells (521-540)
+>                         wc==521 | wc==522 | wc==523 | wc==526 |
+>                         /// WHO cells (541-560)
+>                         wc==541 |
+> 
+>                         /// COLUMN 4
+>                         /// WHO cells (561-580)
+>                         wc==561 | wc==562 | wc==563 | wc==564 | wc==566 | wc==567 |
+>                         /// WHO cells (581-600)
+>                         wc==581 | wc==582 | wc==583 | wc==586 |
+>                         /// WHO cells (601-620)
+>                         wc==601 | wc==602 | wc==603
+>                         /// WHO cells (621-640)
+>                         ;
+{txt}(178 real changes made)
+
+{com}. ** AMR (Region B)   WITH DIABETES;
+. replace wr = 2 if
+>                         /// COLUMN 1
+>                         /// WHO cells (320-340)
+>                         wc==332 | wc==333 |
+>                         /// WHO cells (341-360)
+>                         wc==345 | wc==349 | wc==351 | wc==352 |
+>                         /// WHO cells (361-380)
+>                         wc==364 | wc==365 | wc==367 | wc==368 |
+>                         /// WHO cells (381-400)
+>                         wc==381 | wc==382 | wc==383 | wc==386 |
+> 
+>                         /// COLUMN 2
+>                         /// WHO cells (401-420)
+>                         wc==408 | wc==409 | wc==411 |
+>                         /// WHO cells (421-440)
+>                         wc==424 | wc==427 | wc==428 |
+>                         /// WHO cells (441-460)
+>                         wc==442 | wc==443 | wc==446 |
+>                         /// WHO cells (461-480)
+>                         wc==461 |
+> 
+>                         /// COLUMN 3
+>                         /// WHO cells (481-500)
+>                         wc==489 | wc==492 |
+>                         /// WHO cells (501-520)
+>                         wc==505 | wc==509 | wc==511 | wc==512 |
+>                         /// WHO cells (521-540)
+>                         wc==524 | wc==525 | wc==527 | wc==528 |
+>                         /// WHO cells (541-560)
+>                         wc==542 | wc==543 | wc==544 | wc==546 | wc==547 |
+> 
+>                         /// COLUMN 4
+>                         /// WHO cells (561-580)
+>                         wc==565 | wc==568 | wc==571 |
+>                         /// WHO cells (581-600)
+>                         wc==584 | wc==587 | wc==588 |
+>                         /// WHO cells (601-620)
+>                         wc==604 | wc==606 | wc==607 | wc==608 |
+>                         /// WHO cells (621-640)
+>                         wc==621 | wc==622
+>                         ;
+{txt}(79 real changes made)
+
+{com}. ** AMR (Region B)   WITH DIABETES;
+. replace wr = 3 if
+>                         /// COLUMN 1
+>                         /// WHO cells (320-340)
+>                         wc==330 | wc==334 | wc==336 |
+>                         /// WHO cells (341-360)
+>                         wc==350 | wc==353 |
+>                         /// WHO cells (361-380)
+>                         wc==369 | wc==371 | wc==372 |
+>                         /// WHO cells (381-400)
+>                         wc==384 | wc==387 | wc==388 | wc==391 |
+> 
+>                         /// COLUMN 2
+>                         /// WHO cells (401-420)
+>                         wc==405 | wc==412 |
+>                         /// WHO cells (421-440)
+>                         wc==425 | wc==429 | wc==431 |
+>                         /// WHO cells (441-460)
+>                         wc==444 | wc==447 | wc==448 |
+>                         /// WHO cells (461-480)
+>                         wc==462 | wc==463 | wc==466 |
+> 
+>                         /// COLUMN 3
+>                         /// WHO cells (481-500)
+>                         wc==493 |
+>                         /// WHO cells (501-520)
+>                         wc==513 |
+>                         /// WHO cells (521-540)
+>                         wc==529 | wc==531 | wc==532 |
+>                         /// WHO cells (541-560)
+>                         wc==545 | wc==548 | wc==549 | wc==551 | wc==552 |
+> 
+>                         /// COLUMN 4
+>                         /// WHO cells (561-580)
+>                         wc==569 | wc==572 |
+>                         /// WHO cells (581-600)
+>                         wc==585 | wc==589 | wc==591 | wc==592 |
+>                         /// WHO cells (601-620)
+>                         wc==605 | wc==609 | wc==611 | wc==612 |
+>                         /// WHO cells (621-640)
+>                         wc==623 | wc==624 | wc==626 | wc==627
+>                         ;
+{txt}(56 real changes made)
+
+{com}. ** AMR (Region B)   WITHOUT DIABETES;
+. replace wr = 4 if
+>                         /// COLUMN 1
+>                         /// WHO cells (320-340)
+>                         /// WHO cells (341-360)
+>                         wc==354 | wc==356 |
+>                         /// WHO cells (361-380)
+>                         wc==370 | wc==373 |
+>                         /// WHO cells (381-400)
+>                         wc==385 | wc==389 | wc==392 |
+> 
+>                         /// COLUMN 2
+>                         /// WHO cells (401-420)
+>                         wc==413 |
+>                         /// WHO cells (421-440)
+>                         wc==432 |
+>                         /// WHO cells (441-460)
+>                         wc==445 | wc==449 | wc==451 |
+>                         /// WHO cells (461-480)
+>                         wc==464 | wc==467 |
+> 
+>                         /// COLUMN 3
+>                         /// WHO cells (481-500)
+>                         wc==490 | wc==494 | wc==496 |
+>                         /// WHO cells (501-520)
+>                         wc==510 | wc==514 | wc==516 |
+>                         /// WHO cells (521-540)
+>                         wc==530 | wc==533 |
+>                         /// WHO cells (541-560)
+>                         wc==550 | wc==553 |
+> 
+>                         /// COLUMN 4
+>                         /// WHO cells (561-580)
+>                         wc==570 |
+>                         /// WHO cells (581-600)
+>                         wc==590 |
+>                         /// WHO cells (601-620)
+>                         wc==610 |
+>                         /// WHO cells (621-640)
+>                         wc==625 | wc==628 | wc==631
+>                         ;
+{txt}(32 real changes made)
+
+{com}. ** AMR (Region B)   WITH DIABETES;
+. replace wr = 5 if wr==. & wc>320 & wc<=640;
+{txt}(126 real changes made)
+
+{com}. #delimit cr
+{txt}delimiter now cr
+{com}. 
+. 
+. ***************************************************************************************************
+. ** WITH DIABETES
+. ** GRAPHIC to check coding accuracy of CVD risk groups: REFERENCE FIGURE 3
+. ***************************************************************************************************
+. 
+. #delimit ;
+{txt}delimiter now ;
+{com}. gen yax4 = yax;
+{txt}
+{com}. gen xax4 = xax;
+{txt}
+{com}. replace yax4 = yax4+2 if   yax4>=17 & yax4<=20;
+{txt}(0 real changes made)
+
+{com}. replace yax4 = yax4+1.5 if yax4>=13 & yax4<=16;
+{txt}(285 real changes made)
+
+{com}. replace yax4 = yax4+1 if   yax4>=9 &  yax4<=12;
+{txt}(285 real changes made)
+
+{com}. replace yax4 = yax4+0.5 if yax4>=5 &  yax4<=8;
+{txt}(374 real changes made)
+
+{com}. replace xax4 = xax4+2 if   xax4>=16 & xax4<=21;
+{txt}(203 real changes made)
+
+{com}. replace xax4 = xax4+1.5 if xax4>=11 & xax4<=15;
+{txt}(470 real changes made)
+
+{com}. replace xax4 = xax4+1 if   xax4>=6 &  xax4<=10;
+{txt}(173 real changes made)
+
+{com}. replace xax4 = xax4+0.5 if xax4>=1 &  xax4<=5;
+{txt}(748 real changes made)
+
+{com}.         gr twoway
+>                 /// NO DIABETES (LOWER WHO CHART)
+>                   (sc yax4 xax4 if dm_y1_n0==1 & wr==1, m(S) msize(*2.3) mfc(green*0.65) mlc(gs0) mlw(vthin))
+>                   (sc yax4 xax4 if dm_y1_n0==1 & wr==2, m(S) msize(*2.3) mfc(yellow) mlc(gs0) mlw(vthin))
+>                   (sc yax4 xax4 if dm_y1_n0==1 & wr==3, m(S) msize(*2.3) mfc(orange) mlc(gs0) mlw(vthin))
+>                   (sc yax4 xax4 if dm_y1_n0==1 & wr==4, m(S) msize(*2.3) mfc(red*0.65) mlc(gs0) mlw(vthin))
+>                   (sc yax4 xax4 if dm_y1_n0==1 & wr==5, m(S) msize(*2.3) mfc(red*1.25) mlc(gs0) mlw(vthin))
+>                   ,
+>                         plotregion(c(gs16) ic(gs16) ilw(thin) lw(thin))
+>                         graphregion(color(gs16) ic(gs16) ilw(thin) lw(thin))
+>                         ysize(5)
+> 
+>                         /// SBP TEXT
+>                         text(1 23 "120", place(e) size(small)) text(2 23 "140", place(e) size(small))
+>                         text(3 23 "160", place(e) size(small)) text(4 23 "180", place(e) size(small))
+>                         text(5.5 23 "120", place(e) size(small)) text(6.5 23 "140", place(e) size(small))
+>                         text(7.5 23 "160", place(e) size(small)) text(8.5 23 "180", place(e) size(small))
+>                         text(10 23 "120", place(e) size(small)) text(11 23 "140", place(e) size(small))
+>                         text(12 23 "160", place(e) size(small)) text(13 23 "180", place(e) size(small))
+>                         text(14.5 23 "120", place(e) size(small)) text(15.5 23 "140", place(e) size(small))
+>                         text(16.5 23 "160", place(e) size(small)) text(17.5 23 "180", place(e) size(small))
+> 
+>                         /// AGE TEXT
+>                         text(2.5 -0.2 "40", place(e) size(small)) text(6.5 -0.2 "50", place(e) size(small))
+>                         text(10.5 -0.2 "60", place(e) size(small)) text(14.5 -0.2 "70", place(e) size(small))
+> 
+>                         /// CHOLESTEROL TEXT
+>                         text(-0.25 1.2 "4", place(e) size(small)) text(-0.25 2.2 "5", place(e) size(small))
+>                         text(-0.25 3.2 "6", place(e) size(small)) text(-0.25 4.2 "7", place(e) size(small)) text(-0.25 5.2 "8", place(e) size(small))
+> 
+>                         text(-0.25 6.8 "4", place(e) size(small)) text(-0.25 7.8 "5", place(e) size(small))
+>                         text(-0.25 8.8 "6", place(e) size(small)) text(-0.25 9.8 "7", place(e) size(small)) text(-0.25 10.8 "8", place(e) size(small))
+> 
+>                         text(-0.25 12.2 "4", place(e) size(small)) text(-0.25 13.2 "5", place(e) size(small))
+>                         text(-0.25 14.2 "6", place(e) size(small)) text(-0.25 15.2 "7", place(e) size(small)) text(-0.25 16.2 "8", place(e) size(small))
+> 
+>                         text(-0.25 17.8 "4", place(e) size(small)) text(-0.25 18.8 "5", place(e) size(small))
+>                         text(-0.25 19.8 "6", place(e) size(small)) text(-0.25 20.8 "7", place(e) size(small)) text(-0.25 21.8 "8", place(e) size(small))
+> 
+>                         /// SBP title
+>                         text(9.5 25.5 "SBP (mm Hg)",  place(c) orient(rvertical) size(medsmall))
+>                         /// AGE title
+>                         text(9.5 -1 "Age (years)",  place(c) orient(vertical) size(medsmall))
+>                         /// CHOLESTEROL title
+>                         text(-1.5 11 "Cholesterol (mmol/L)", place(c) orient(horizontal) size(medsmall))
+> 
+>                         /// SMOKER text
+>                         text(19 3.5 "Non-smoker", place(c) size(small))
+>                         text(19 9 "Smoker", place(c) size(small))
+>                         text(19 15 "Non-smoker", place(c) size(small))
+>                         text(19 20.5 "Smoker", place(c) size(small))
+> 
+>                         /// SEX text
+>                         text(20.5 7 "Male", place(c) size(medsmall))
+>                         text(20.5 17 "Female", place(c) size(medsmall))
+> 
+>                         xscale(off lw(vthin) range(-2(0.5)26))
+>                         yscale(off lw(vthin) range(-2(0.5)19))
+>                         legend(off)
+>                         name(Fig3_Diab)
+>                         ;
+{res}{txt}
+{com}. #delimit cr
+{txt}delimiter now cr
+{com}. 
+. 
+. 
+. 
+. ***************************************************************************************************
+. ** 005. WHO 10-YEAR CVD RISK in the HOTN SURVEY
+. **              Tabulation and graphic
+. ***************************************************************************************************
+. 
+. 
+. ** Extra rows to create RISK MATRIX. Can drop for analysis and N will = 1234 - missing data (1,106)
+. drop if pcount==0
+{txt}(488 observations deleted)
+
+{com}. 
+. ** Set as survey dataset
+. svyset ed [pweight=wfinal1_ad], strata(region)
+
+      {txt}pweight:{col 16}{res}wfinal1_ad
+          {txt}VCE:{col 16}{res}linearized
+  {txt}Single unit:{col 16}{res}missing
+     {txt}Strata 1:{col 16}{res}region
+         {txt}SU 1:{col 16}{res}ed
+        {txt}FPC 1:{col 16}<zero>
+{p2colreset}{...}
+
+{com}. 
+. ** Age in 3-age groups (NU paper draft)
+. gen age3g = recode(agey,45,65,110)
+{txt}
+{com}. recode age3g 45=1 65=2 110=3
+{txt}(age3g: 1106 changes made)
+
+{com}. label define age3g 1 "25-44" 2 "45-64" 3 "65+"
+{txt}
+{com}. label values age3g age3g
+{txt}
+{com}. label var age3g "Age in 3 groups (25-44, 45-64, 65+)"
+{txt}
+{com}. 
+. ** GROUP 10-year risk into 2 categories: 10% or greater risk of CVD
+. gen wr2 = .
+{txt}(1,106 missing values generated)
+
+{com}. replace wr2 = 0 if wr==1
+{txt}(987 real changes made)
+
+{com}. replace wr2 = 1 if wr==2 | wr==3 | wr==4 | wr==5
+{txt}(119 real changes made)
+
+{com}. 
+. ** GROUP 10-year risk into 3 categories: 20% or greater risk of CVD
+. gen wr3 = .
+{txt}(1,106 missing values generated)
+
+{com}. replace wr3 = 0 if wr==1 | wr==2
+{txt}(1,056 real changes made)
+
+{com}. replace wr3 = 1 if wr==3 | wr==4 | wr==5
+{txt}(50 real changes made)
+
+{com}. 
+. ** Tabulate 10-YEAR risk by age: 10% or greater risk of CVD
+. tab wr2 dm_y1_n0
+
+           {txt}{c |}  Diabetes (yes/no).
+           {c |}  Self-report and lab
+           {c |}       confirmed
+       wr2 {c |}        no        yes {c |}     Total
+{hline 11}{c +}{hline 22}{c +}{hline 10}
+         0 {c |}{res}       849        138 {txt}{c |}{res}       987 
+{txt}         1 {c |}{res}        43         76 {txt}{c |}{res}       119 
+{txt}{hline 11}{c +}{hline 22}{c +}{hline 10}
+     Total {c |}{res}       892        214 {txt}{c |}{res}     1,106 
+{txt}
+{com}. ** females
+. svy: tab age3g wr2 if sex==0, row perc ci
+{txt}(running tabulate on estimation sample)
+{res}
+{txt}{col 1}Number of strata{col 20}= {res}        4{txt}{col 49}Number of obs{col 67}= {res}       683
+{txt}{col 1}Number of PSUs{col 20}= {res}       45{txt}{col 49}Population size{col 67}={res} 586.484963
+{txt}{col 49}Design df{col 67}= {res}        41
+
+{txt}{hline 10}{c TT}{hline 44}
+Age in 3  {c |}
+groups    {c |}
+(25-44,   {c |}
+45-64,    {c |}                     wr2                    
+65+)      {c |}             0              1          Total
+{hline 10}{c +}{hline 44}
+    25-44 {c |}         {res}99.34          .6612            100
+          {txt}{c |}  {res}[97.2,99.85]  [.1537,2.797]               
+          {txt}{c |} 
+    45-64 {c |}         {res}95.12          4.878            100
+          {txt}{c |} {res}[91.46,97.26]  [2.739,8.541]               
+          {txt}{c |} 
+      65+ {c |}         {res}52.23          47.77            100
+          {txt}{c |}  {res}[43.1,61.22]   [38.78,56.9]               
+          {txt}{c |} 
+    Total {c |}         {res}88.43          11.57            100
+          {txt}{c |} {res}[84.99,91.17]  [8.827,15.01]               
+{txt}{hline 10}{c BT}{hline 44}
+  Key:  {col 1}{res}row percentage
+{col 9}[95% confidence interval for row percentage]
+
+{txt}  Pearson:
+{col 5}Uncorrected{col 19}chi2({res}2{txt}){col 35}= {res} 219.8957
+{txt}{col 5}Design-based{col 19}F({res}1.89{txt}, {res}77.66{txt}){col 35}= {res} 117.0005{col 51}{txt}P = {res}0.0000
+{txt}
+{com}. ** males
+. svy: tab age3g wr2 if sex==1, row perc ci
+{txt}(running tabulate on estimation sample)
+{res}
+{txt}{col 1}Number of strata{col 20}= {res}        4{txt}{col 49}Number of obs{col 67}= {res}       423
+{txt}{col 1}Number of PSUs{col 20}= {res}       45{txt}{col 49}Population size{col 67}={res} 511.980159
+{txt}{col 49}Design df{col 67}= {res}        41
+
+{txt}{hline 10}{c TT}{hline 44}
+Age in 3  {c |}
+groups    {c |}
+(25-44,   {c |}
+45-64,    {c |}                     wr2                    
+65+)      {c |}             0              1          Total
+{hline 10}{c +}{hline 44}
+    25-44 {c |}         {res}99.51          .4863            100
+          {txt}{c |}  {res}[96.3,99.94]  [.0622,3.696]               
+          {txt}{c |} 
+    45-64 {c |}         {res}95.09          4.909            100
+          {txt}{c |} {res}[89.87,97.69]  [2.309,10.13]               
+          {txt}{c |} 
+      65+ {c |}         {res}71.27          28.73            100
+          {txt}{c |} {res}[57.91,81.73]  [18.27,42.09]               
+          {txt}{c |} 
+    Total {c |}         {res}93.07           6.93            100
+          {txt}{c |} {res}[89.66,95.41]  [4.587,10.34]               
+{txt}{hline 10}{c BT}{hline 44}
+  Key:  {col 1}{res}row percentage
+{col 9}[95% confidence interval for row percentage]
+
+{txt}  Pearson:
+{col 5}Uncorrected{col 19}chi2({res}2{txt}){col 35}= {res}  66.1267
+{txt}{col 5}Design-based{col 19}F({res}1.95{txt}, {res}79.95{txt}){col 35}= {res}  29.2513{col 51}{txt}P = {res}0.0000
+{txt}
+{com}. ** all
+. svy: tab age3g wr2 , row perc ci
+{txt}(running tabulate on estimation sample)
+{res}
+{txt}{col 1}Number of strata{col 20}= {res}        4{txt}{col 49}Number of obs{col 67}= {res}     1,106
+{txt}{col 1}Number of PSUs{col 20}= {res}       45{txt}{col 49}Population size{col 67}={res} 1,098.4651
+{txt}{col 49}Design df{col 67}= {res}        41
+
+{txt}{hline 10}{c TT}{hline 44}
+Age in 3  {c |}
+groups    {c |}
+(25-44,   {c |}
+45-64,    {c |}                     wr2                    
+65+)      {c |}             0              1          Total
+{hline 10}{c +}{hline 44}
+    25-44 {c |}         {res}99.42          .5781            100
+          {txt}{c |} {res}[98.22,99.81]  [.1858,1.784]               
+          {txt}{c |} 
+    45-64 {c |}         {res}95.11          4.893            100
+          {txt}{c |}  {res}[92.36,96.9]  [3.101,7.639]               
+          {txt}{c |} 
+      65+ {c |}         {res}60.34          39.66            100
+          {txt}{c |} {res}[52.55,67.64]  [32.36,47.45]               
+          {txt}{c |} 
+    Total {c |}          {res}90.6          9.405            100
+          {txt}{c |} {res}[88.65,92.23]  [7.767,11.35]               
+{txt}{hline 10}{c BT}{hline 44}
+  Key:  {col 1}{res}row percentage
+{col 9}[95% confidence interval for row percentage]
+
+{txt}  Pearson:
+{col 5}Uncorrected{col 19}chi2({res}2{txt}){col 35}= {res} 274.8439
+{txt}{col 5}Design-based{col 19}F({res}1.89{txt}, {res}77.69{txt}){col 35}= {res} 116.6110{col 51}{txt}P = {res}0.0000
+{txt}
+{com}. 
+. ** Tabulate 10-YEAR risk by age: 20% or greater risk of CVD
+. tab wr3 dm_y1_n0
+
+           {txt}{c |}  Diabetes (yes/no).
+           {c |}  Self-report and lab
+           {c |}       confirmed
+       wr3 {c |}        no        yes {c |}     Total
+{hline 11}{c +}{hline 22}{c +}{hline 10}
+         0 {c |}{res}       876        180 {txt}{c |}{res}     1,056 
+{txt}         1 {c |}{res}        16         34 {txt}{c |}{res}        50 
+{txt}{hline 11}{c +}{hline 22}{c +}{hline 10}
+     Total {c |}{res}       892        214 {txt}{c |}{res}     1,106 
+{txt}
+{com}. ** females
+. svy: tab age3g wr3 if sex==0, row perc ci
+{txt}(running tabulate on estimation sample)
+{res}
+{txt}{col 1}Number of strata{col 20}= {res}        4{txt}{col 49}Number of obs{col 67}= {res}       683
+{txt}{col 1}Number of PSUs{col 20}= {res}       45{txt}{col 49}Population size{col 67}={res} 586.484963
+{txt}{col 49}Design df{col 67}= {res}        41
+
+{txt}{hline 10}{c TT}{hline 44}
+Age in 3  {c |}
+groups    {c |}
+(25-44,   {c |}
+45-64,    {c |}                     wr3                    
+65+)      {c |}             0              1          Total
+{hline 10}{c +}{hline 44}
+    25-44 {c |}           {res}100              0            100
+          {txt}{c |}              {res}                              
+          {txt}{c |} 
+    45-64 {c |}         {res}98.36          1.638            100
+          {txt}{c |}  {res}[96.19,99.3]  [.6962,3.806]               
+          {txt}{c |} 
+      65+ {c |}         {res}81.84          18.16            100
+          {txt}{c |}  {res}[72.7,88.41]   [11.59,27.3]               
+          {txt}{c |} 
+    Total {c |}         {res}95.79          4.208            100
+          {txt}{c |} {res}[93.48,97.31]  [2.693,6.518]               
+{txt}{hline 10}{c BT}{hline 44}
+  Key:  {col 1}{res}row percentage
+{col 9}[95% confidence interval for row percentage]
+
+{txt}  Pearson:
+{col 5}Uncorrected{col 19}chi2({res}2{txt}){col 35}= {res}  82.8681
+{txt}{col 5}Design-based{col 19}F({res}1.79{txt}, {res}73.43{txt}){col 35}= {res}  40.4117{col 51}{txt}P = {res}0.0000
+{txt}
+{com}. ** males
+. svy: tab age3g wr3 if sex==1, row perc ci
+{txt}(running tabulate on estimation sample)
+{res}
+{txt}{col 1}Number of strata{col 20}= {res}        4{txt}{col 49}Number of obs{col 67}= {res}       423
+{txt}{col 1}Number of PSUs{col 20}= {res}       45{txt}{col 49}Population size{col 67}={res} 511.980159
+{txt}{col 49}Design df{col 67}= {res}        41
+
+{txt}{hline 10}{c TT}{hline 44}
+Age in 3  {c |}
+groups    {c |}
+(25-44,   {c |}
+45-64,    {c |}                     wr3                    
+65+)      {c |}             0              1          Total
+{hline 10}{c +}{hline 44}
+    25-44 {c |}         {res}99.51          .4863            100
+          {txt}{c |}  {res}[96.3,99.94]  [.0622,3.696]               
+          {txt}{c |} 
+    45-64 {c |}         {res}95.91          4.086            100
+          {txt}{c |}     {res}[91,98.2]  [1.803,8.996]               
+          {txt}{c |} 
+      65+ {c |}         {res}83.14          16.86            100
+          {txt}{c |}  {res}[68.48,91.8]    [8.2,31.52]               
+          {txt}{c |} 
+    Total {c |}         {res}95.39          4.611            100
+          {txt}{c |} {res}[92.06,97.36]  [2.637,7.944]               
+{txt}{hline 10}{c BT}{hline 44}
+  Key:  {col 1}{res}row percentage
+{col 9}[95% confidence interval for row percentage]
+
+{txt}  Pearson:
+{col 5}Uncorrected{col 19}chi2({res}2{txt}){col 35}= {res}  31.9471
+{txt}{col 5}Design-based{col 19}F({res}1.93{txt}, {res}78.98{txt}){col 35}= {res}  13.5185{col 51}{txt}P = {res}0.0000
+{txt}
+{com}. ** all
+. svy: tab age3g wr3 , row perc ci
+{txt}(running tabulate on estimation sample)
+{res}
+{txt}{col 1}Number of strata{col 20}= {res}        4{txt}{col 49}Number of obs{col 67}= {res}     1,106
+{txt}{col 1}Number of PSUs{col 20}= {res}       45{txt}{col 49}Population size{col 67}={res} 1,098.4651
+{txt}{col 49}Design df{col 67}= {res}        41
+
+{txt}{hline 10}{c TT}{hline 44}
+Age in 3  {c |}
+groups    {c |}
+(25-44,   {c |}
+45-64,    {c |}                     wr3                    
+65+)      {c |}             0              1          Total
+{hline 10}{c +}{hline 44}
+    25-44 {c |}         {res}99.77          .2309            100
+          {txt}{c |} {res}[98.22,99.97]  [.0296,1.779]               
+          {txt}{c |} 
+    45-64 {c |}          {res}97.2          2.803            100
+          {txt}{c |} {res}[94.76,98.52]   [1.48,5.243]               
+          {txt}{c |} 
+      65+ {c |}          {res}82.4           17.6            100
+          {txt}{c |} {res}[74.39,88.29]  [11.71,25.61]               
+          {txt}{c |} 
+    Total {c |}          {res}95.6          4.396            100
+          {txt}{c |} {res}[93.96,96.82]  [3.182,6.043]               
+{txt}{hline 10}{c BT}{hline 44}
+  Key:  {col 1}{res}row percentage
+{col 9}[95% confidence interval for row percentage]
+
+{txt}  Pearson:
+{col 5}Uncorrected{col 19}chi2({res}2{txt}){col 35}= {res} 107.8507
+{txt}{col 5}Design-based{col 19}F({res}1.98{txt}, {res}81.03{txt}){col 35}= {res}  40.6943{col 51}{txt}P = {res}0.0000
+{txt}
+{com}. 
+. 
+. ** If you have prevalent CVD --> immediately high risk (MI / Stroke / Angina / HF)
+. gen wr_adj = wr
+{txt}
+{com}. replace wr_adj = 5 if mi==1|stroke==1|angina==1|hf==1
+{txt}(55 real changes made)
+
+{com}. 
+. ** GROUP 10-year risk into 2 categories: 10% or greater risk of CVD
+. gen wr2_adj = .
+{txt}(1,106 missing values generated)
+
+{com}. replace wr2_adj = 0 if wr_adj==1
+{txt}(945 real changes made)
+
+{com}. replace wr2_adj = 1 if wr_adj==2 | wr_adj==3 | wr_adj==4 | wr_adj==5
+{txt}(161 real changes made)
+
+{com}. 
+. ** GROUP 10-year risk into 3 categories: 20% or greater risk of CVD
+. gen wr3_adj = .
+{txt}(1,106 missing values generated)
+
+{com}. replace wr3_adj = 0 if wr_adj==1 | wr_adj==2
+{txt}(1,003 real changes made)
+
+{com}. replace wr3_adj = 1 if wr_adj==3 | wr_adj==4 | wr_adj==5
+{txt}(103 real changes made)
+
+{com}. 
+. ** Tabulate 10-YEAR risk by age: 10% or greater risk of CVD
+. tab wr2_adj dm_y1_n0
+
+           {txt}{c |}  Diabetes (yes/no).
+           {c |}  Self-report and lab
+           {c |}       confirmed
+   wr2_adj {c |}        no        yes {c |}     Total
+{hline 11}{c +}{hline 22}{c +}{hline 10}
+         0 {c |}{res}       826        119 {txt}{c |}{res}       945 
+{txt}         1 {c |}{res}        66         95 {txt}{c |}{res}       161 
+{txt}{hline 11}{c +}{hline 22}{c +}{hline 10}
+     Total {c |}{res}       892        214 {txt}{c |}{res}     1,106 
+{txt}
+{com}. ** females
+. svy: tab age3g wr2_adj if sex==0, row perc ci
+{txt}(running tabulate on estimation sample)
+{res}
+{txt}{col 1}Number of strata{col 20}= {res}        4{txt}{col 49}Number of obs{col 67}= {res}       683
+{txt}{col 1}Number of PSUs{col 20}= {res}       45{txt}{col 49}Population size{col 67}={res} 586.484963
+{txt}{col 49}Design df{col 67}= {res}        41
+
+{txt}{hline 10}{c TT}{hline 44}
+Age in 3  {c |}
+groups    {c |}
+(25-44,   {c |}
+45-64,    {c |}                   wr2_adj                  
+65+)      {c |}             0              1          Total
+{hline 10}{c +}{hline 44}
+    25-44 {c |}         {res}97.64          2.362            100
+          {txt}{c |} {res}[95.49,98.78]  [1.225,4.506]               
+          {txt}{c |} 
+    45-64 {c |}         {res}91.84          8.158            100
+          {txt}{c |} {res}[87.07,94.95]  [5.046,12.93]               
+          {txt}{c |} 
+      65+ {c |}         {res}45.81          54.19            100
+          {txt}{c |} {res}[37.05,54.83]  [45.17,62.95]               
+          {txt}{c |} 
+    Total {c |}         {res}85.22          14.78            100
+          {txt}{c |} {res}[81.33,88.42]  [11.58,18.67]               
+{txt}{hline 10}{c BT}{hline 44}
+  Key:  {col 1}{res}row percentage
+{col 9}[95% confidence interval for row percentage]
+
+{txt}  Pearson:
+{col 5}Uncorrected{col 19}chi2({res}2{txt}){col 35}= {res} 213.0343
+{txt}{col 5}Design-based{col 19}F({res}1.99{txt}, {res}81.77{txt}){col 35}= {res} 130.4385{col 51}{txt}P = {res}0.0000
+{txt}
+{com}. ** males
+. svy: tab age3g wr2_adj if sex==1, row perc ci
+{txt}(running tabulate on estimation sample)
+{res}
+{txt}{col 1}Number of strata{col 20}= {res}        4{txt}{col 49}Number of obs{col 67}= {res}       423
+{txt}{col 1}Number of PSUs{col 20}= {res}       45{txt}{col 49}Population size{col 67}={res} 511.980159
+{txt}{col 49}Design df{col 67}= {res}        41
+
+{txt}{hline 10}{c TT}{hline 44}
+Age in 3  {c |}
+groups    {c |}
+(25-44,   {c |}
+45-64,    {c |}                   wr2_adj                  
+65+)      {c |}             0              1          Total
+{hline 10}{c +}{hline 44}
+    25-44 {c |}          {res}98.8          1.197            100
+          {txt}{c |} {res}[95.03,99.72]  [.2797,4.969]               
+          {txt}{c |} 
+    45-64 {c |}         {res}92.08          7.916            100
+          {txt}{c |} {res}[86.52,95.47]  [4.527,13.48]               
+          {txt}{c |} 
+      65+ {c |}         {res}67.35          32.65            100
+          {txt}{c |} {res}[54.79,77.84]  [22.16,45.21]               
+          {txt}{c |} 
+    Total {c |}         {res}90.95          9.048            100
+          {txt}{c |} {res}[87.01,93.78]  [6.216,12.99]               
+{txt}{hline 10}{c BT}{hline 44}
+  Key:  {col 1}{res}row percentage
+{col 9}[95% confidence interval for row percentage]
+
+{txt}  Pearson:
+{col 5}Uncorrected{col 19}chi2({res}2{txt}){col 35}= {res}  63.1165
+{txt}{col 5}Design-based{col 19}F({res}1.77{txt}, {res}72.73{txt}){col 35}= {res}  29.4166{col 51}{txt}P = {res}0.0000
+{txt}
+{com}. ** all
+. svy: tab age3g wr2_adj , row perc ci
+{txt}(running tabulate on estimation sample)
+{res}
+{txt}{col 1}Number of strata{col 20}= {res}        4{txt}{col 49}Number of obs{col 67}= {res}     1,106
+{txt}{col 1}Number of PSUs{col 20}= {res}       45{txt}{col 49}Population size{col 67}={res} 1,098.4651
+{txt}{col 49}Design df{col 67}= {res}        41
+
+{txt}{hline 10}{c TT}{hline 44}
+Age in 3  {c |}
+groups    {c |}
+(25-44,   {c |}
+45-64,    {c |}                   wr2_adj                  
+65+)      {c |}             0              1          Total
+{hline 10}{c +}{hline 44}
+    25-44 {c |}         {res}98.19          1.808            100
+          {txt}{c |} {res}[96.24,99.14]  [.8606,3.761]               
+          {txt}{c |} 
+    45-64 {c |}         {res}91.96          8.043            100
+          {txt}{c |} {res}[88.78,94.29]   [5.71,11.22]               
+          {txt}{c |} 
+      65+ {c |}         {res}54.98          45.02            100
+          {txt}{c |}    {res}[47.77,62]     [38,52.23]               
+          {txt}{c |} 
+    Total {c |}         {res}87.89          12.11            100
+          {txt}{c |} {res}[85.49,89.95]  [10.05,14.51]               
+{txt}{hline 10}{c BT}{hline 44}
+  Key:  {col 1}{res}row percentage
+{col 9}[95% confidence interval for row percentage]
+
+{txt}  Pearson:
+{col 5}Uncorrected{col 19}chi2({res}2{txt}){col 35}= {res} 263.9518
+{txt}{col 5}Design-based{col 19}F({res}1.79{txt}, {res}73.28{txt}){col 35}= {res} 117.0169{col 51}{txt}P = {res}0.0000
+{txt}
+{com}. 
+. ** Tabulate 10-YEAR risk by age: 20% or greater risk of CVD
+. tab wr3_adj dm_y1_n0
+
+           {txt}{c |}  Diabetes (yes/no).
+           {c |}  Self-report and lab
+           {c |}       confirmed
+   wr3_adj {c |}        no        yes {c |}     Total
+{hline 11}{c +}{hline 22}{c +}{hline 10}
+         0 {c |}{res}       849        154 {txt}{c |}{res}     1,003 
+{txt}         1 {c |}{res}        43         60 {txt}{c |}{res}       103 
+{txt}{hline 11}{c +}{hline 22}{c +}{hline 10}
+     Total {c |}{res}       892        214 {txt}{c |}{res}     1,106 
+{txt}
+{com}. ** females
+. svy: tab age3g wr3_adj if sex==0, row perc ci
+{txt}(running tabulate on estimation sample)
+{res}
+{txt}{col 1}Number of strata{col 20}= {res}        4{txt}{col 49}Number of obs{col 67}= {res}       683
+{txt}{col 1}Number of PSUs{col 20}= {res}       45{txt}{col 49}Population size{col 67}={res} 586.484963
+{txt}{col 49}Design df{col 67}= {res}        41
+
+{txt}{hline 10}{c TT}{hline 44}
+Age in 3  {c |}
+groups    {c |}
+(25-44,   {c |}
+45-64,    {c |}                   wr3_adj                  
+65+)      {c |}             0              1          Total
+{hline 10}{c +}{hline 44}
+    25-44 {c |}         {res}97.97          2.032            100
+          {txt}{c |}    {res}[95.92,99]  [1.002,4.076]               
+          {txt}{c |} 
+    45-64 {c |}         {res}94.84          5.159            100
+          {txt}{c |} {res}[90.34,97.31]  [2.693,9.659]               
+          {txt}{c |} 
+      65+ {c |}         {res}70.81          29.19            100
+          {txt}{c |} {res}[62.03,78.28]  [21.72,37.97]               
+          {txt}{c |} 
+    Total {c |}         {res}91.43           8.57            100
+          {txt}{c |} {res}[88.46,93.69]  [6.311,11.54]               
+{txt}{hline 10}{c BT}{hline 44}
+  Key:  {col 1}{res}row percentage
+{col 9}[95% confidence interval for row percentage]
+
+{txt}  Pearson:
+{col 5}Uncorrected{col 19}chi2({res}2{txt}){col 35}= {res}  93.7924
+{txt}{col 5}Design-based{col 19}F({res}1.99{txt}, {res}81.39{txt}){col 35}= {res}  53.2483{col 51}{txt}P = {res}0.0000
+{txt}
+{com}. ** males
+. svy: tab age3g wr3_adj if sex==1, row perc ci
+{txt}(running tabulate on estimation sample)
+{res}
+{txt}{col 1}Number of strata{col 20}= {res}        4{txt}{col 49}Number of obs{col 67}= {res}       423
+{txt}{col 1}Number of PSUs{col 20}= {res}       45{txt}{col 49}Population size{col 67}={res} 511.980159
+{txt}{col 49}Design df{col 67}= {res}        41
+
+{txt}{hline 10}{c TT}{hline 44}
+Age in 3  {c |}
+groups    {c |}
+(25-44,   {c |}
+45-64,    {c |}                   wr3_adj                  
+65+)      {c |}             0              1          Total
+{hline 10}{c +}{hline 44}
+    25-44 {c |}          {res}98.8          1.197            100
+          {txt}{c |} {res}[95.03,99.72]  [.2797,4.969]               
+          {txt}{c |} 
+    45-64 {c |}         {res}92.91          7.093            100
+          {txt}{c |} {res}[87.56,96.06]   [3.94,12.44]               
+          {txt}{c |} 
+      65+ {c |}         {res}75.64          24.36            100
+          {txt}{c |} {res}[62.54,85.24]  [14.76,37.46]               
+          {txt}{c |} 
+    Total {c |}         {res}92.66          7.336            100
+          {txt}{c |} {res}[88.66,95.33]   [4.67,11.34]               
+{txt}{hline 10}{c BT}{hline 44}
+  Key:  {col 1}{res}row percentage
+{col 9}[95% confidence interval for row percentage]
+
+{txt}  Pearson:
+{col 5}Uncorrected{col 19}chi2({res}2{txt}){col 35}= {res}  41.2129
+{txt}{col 5}Design-based{col 19}F({res}1.80{txt}, {res}73.90{txt}){col 35}= {res}  19.9017{col 51}{txt}P = {res}0.0000
+{txt}
+{com}. ** all
+. svy: tab age3g wr3_adj , row perc ci
+{txt}(running tabulate on estimation sample)
+{res}
+{txt}{col 1}Number of strata{col 20}= {res}        4{txt}{col 49}Number of obs{col 67}= {res}     1,106
+{txt}{col 1}Number of PSUs{col 20}= {res}       45{txt}{col 49}Population size{col 67}={res} 1,098.4651
+{txt}{col 49}Design df{col 67}= {res}        41
+
+{txt}{hline 10}{c TT}{hline 44}
+Age in 3  {c |}
+groups    {c |}
+(25-44,   {c |}
+45-64,    {c |}                   wr3_adj                  
+65+)      {c |}             0              1          Total
+{hline 10}{c +}{hline 44}
+    25-44 {c |}         {res}98.36          1.635            100
+          {txt}{c |} {res}[96.37,99.27]  [.7275,3.634]               
+          {txt}{c |} 
+    45-64 {c |}         {res}93.92          6.079            100
+          {txt}{c |} {res}[90.75,96.05]  [3.947,9.251]               
+          {txt}{c |} 
+      65+ {c |}         {res}72.87          27.13            100
+          {txt}{c |}  {res}[65.5,79.16]   [20.84,34.5]               
+          {txt}{c |} 
+    Total {c |}         {res}92.01          7.995            100
+          {txt}{c |} {res}[89.65,93.86]  [6.138,10.35]               
+{txt}{hline 10}{c BT}{hline 44}
+  Key:  {col 1}{res}row percentage
+{col 9}[95% confidence interval for row percentage]
+
+{txt}  Pearson:
+{col 5}Uncorrected{col 19}chi2({res}2{txt}){col 35}= {res} 131.1488
+{txt}{col 5}Design-based{col 19}F({res}1.85{txt}, {res}75.87{txt}){col 35}= {res}  61.2923{col 51}{txt}P = {res}0.0000
+{txt}
+{com}. 
+. 
+. 
+. ***************************************************************************************************
+. ** GRAPHIC: WITHOUT ADJUSTMENT FOR SELF-REPORTED --> MI, STROKE< ANGINA
+. ***************************************************************************************************
+. 
+. ** Preparing dataset for plotting STACKED BAR CHART of 10-year risk (WHO RISK IN 3 groups)
+. qui{c -(}
+{txt}
+{com}. 
+. ** Preparing dataset for plotting STACKED BAR CHART of 10-year risk (WHO RISK IN 5 groups)
+. qui {c -(}
+{txt}
+{com}. 
+. ** STACKED BAR CHART (WHO RISK IN 5 groups)
+. preserve
+{txt}
+{com}.         use `wr_results_correct_CIs', clear
+{txt}
+{com}.         gen prev = estimate_2*100
+{txt}(8 missing values generated)
+
+{com}.         gen plo = min95_2*100
+{txt}(8 missing values generated)
+
+{com}.         gen phi = max95_2*100
+{txt}(8 missing values generated)
+
+{com}. 
+.         gen prev1 = prev if wr==1
+{txt}(24 missing values generated)
+
+{com}.         gen prev2 = prev if wr==2
+{txt}(25 missing values generated)
+
+{com}.         gen prev3 = prev if wr==3
+{txt}(25 missing values generated)
+
+{com}.         gen prev4 = prev if wr==4
+{txt}(28 missing values generated)
+
+{com}.         gen prev5 = prev if wr==5
+{txt}(26 missing values generated)
+
+{com}. 
+.         ** WOMEN & MEN
+.         #delimit ;
+{txt}delimiter now ;
+{com}.         graph hbar (sum) prev1 prev2 prev3 prev4 prev5, stack
+>                 plotregion(c(gs16) ic(gs16) ilw(thin) lw(thin))
+>                 graphregion(color(gs16) ic(gs16) ilw(thin) lw(thin))
+>                 ysize(2.8)
+> 
+>                 over(age3g, gap(15))
+>                 over(sex, gap(60))
+>                 blabel(none, format(%9.0f) pos(outside) size(medsmall))
+>                 /// WR==1
+>                 bar(1, bc(green*0.65) blw(vthin) blc(gs0))
+>                 /// WR==2
+>                 bar(2, bc(yellow) blw(vthin) blc(gs0))
+>                 /// WR==3
+>                 bar(3, bc(orange) blw(vthin) blc(gs0))
+>                 /// WR==4
+>                 bar(4, bc(red*0.65) blw(vthin) blc(gs0))
+>                 /// WR==6
+>                 bar(5, bc(red*1.25) blw(vthin) blc(gs0))
+> 
+>                 ylab(0(10)100, nogrid glc(gs0)) yscale(noline range(1(5)45))
+>             ytitle("10-year risk of fatal or non-fatal CVD", margin(t=3) size(medium))
+> 
+>                 legend(size(medsmall) position(12) bm(t=0 b=5 l=0 r=0) colf cols(5)
+>                 region(fcolor(gs16) lw(vthin) margin(l=1 r=1 t=1 b=1))
+>                 lab(1 "<10%")
+>                 lab(2 "10 to <20%")
+>                 lab(3 "20 to <30%")
+>                 lab(4 "30 to <40%")
+>                 lab(5 ">=40%")
+>                 )
+>                 name(Fig4_WHORisk)
+>         ;
+{res}{txt}
+{com}.         #delimit cr
+{txt}delimiter now cr
+{com}. restore
+{txt}
+{com}. 
+. 
+. 
+. 
+. ***************************************************************************************************
+. ** GRAPHIC: WITH ADJUSTMENT FOR SELF-REPORTED --> MI, STROKE< ANGINA
+. ***************************************************************************************************
+. 
+. ** Preparing dataset for plotting STACKED BAR CHART of 10-year risk (WHO RISK IN 3 groups)
+. qui{c -(}
+{txt}
+{com}. 
+. ** Preparing dataset for plotting STACKED BAR CHART of 10-year risk (WHO RISK IN 5 groups)
+. qui {c -(}
+{txt}
+{com}. 
+. ** STACKED BAR CHART (WHO RISK IN 5 groups)
+. preserve
+{txt}
+{com}.         use `wr_adj_results_correct_CIs', clear
+{txt}
+{com}.         gen prev = estimate_2*100
+{txt}(6 missing values generated)
+
+{com}.         gen plo = min95_2*100
+{txt}(6 missing values generated)
+
+{com}.         gen phi = max95_2*100
+{txt}(6 missing values generated)
+
+{com}. 
+.         gen prev1 = prev if wr_adj==1
+{txt}(24 missing values generated)
+
+{com}.         gen prev2 = prev if wr_adj==2
+{txt}(25 missing values generated)
+
+{com}.         gen prev3 = prev if wr_adj==3
+{txt}(25 missing values generated)
+
+{com}.         gen prev4 = prev if wr_adj==4
+{txt}(28 missing values generated)
+
+{com}.         gen prev5 = prev if wr_adj==5
+{txt}(24 missing values generated)
+
+{com}. 
+.         ** WOMEN & MEN
+.         #delimit ;
+{txt}delimiter now ;
+{com}.         graph hbar (sum) prev1 prev2 prev3 prev4 prev5, stack
+>                 plotregion(c(gs16) ic(gs16) ilw(thin) lw(thin))
+>                 graphregion(color(gs16) ic(gs16) ilw(thin) lw(thin))
+>                 ysize(2.8)
+> 
+>                 over(age3g, gap(15))
+>                 over(sex, gap(60))
+>                 blabel(none, format(%9.0f) pos(outside) size(medsmall))
+>                 /// WR==1
+>                 bar(1, bc(green*0.65) blw(vthin) blc(gs0))
+>                 /// WR==2
+>                 bar(2, bc(yellow) blw(vthin) blc(gs0))
+>                 /// WR==3
+>                 bar(3, bc(orange) blw(vthin) blc(gs0))
+>                 /// WR==4
+>                 bar(4, bc(red*0.65) blw(vthin) blc(gs0))
+>                 /// WR==6
+>                 bar(5, bc(red*1.25) blw(vthin) blc(gs0))
+> 
+>                 ylab(0(10)100, nogrid glc(gs0)) yscale(noline range(1(5)45))
+>             ytitle("10-year risk of fatal or non-fatal CVD", margin(t=3) size(medium))
+> 
+>                 legend(size(medsmall) position(12) bm(t=0 b=5 l=0 r=0) colf cols(5)
+>                 region(fcolor(gs16) lw(vthin) margin(l=1 r=1 t=1 b=1))
+>                 lab(1 "<10%")
+>                 lab(2 "10 to <20%")
+>                 lab(3 "20 to <30%")
+>                 lab(4 "30 to <40%")
+>                 lab(5 ">=40%")
+>                 )
+>                 name(Fig5_WHORisk_Adj)
+>                 ;
+{res}{txt}
+{com}.                 #delimit cr
+{txt}delimiter now cr
+{com}. restore
+{txt}
+{com}. 
+{txt}end of do-file
+
+{com}. exit, clear
