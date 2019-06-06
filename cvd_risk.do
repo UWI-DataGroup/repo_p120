@@ -27,7 +27,7 @@ use "`datapath'\version02\1-input\survey_wave1.dta", clear
 *********************************************************************************************************************************************************
 *   DATA MANAGEMENT
 *********************************************************************************************************************************************************
-**Not applicable responses are coded as "999" (legitimate skip). Not ideal for some tabulations where we do not want to include these in the demnominator. 
+**Not applicable responses are coded as "999" (legitimate skip). 
 
 *List all numeric variables
 *findname, type(numeric)
@@ -147,8 +147,9 @@ GH61     GH187    GH273    HC65F    RPH56Y   HB52     D33C     D96 ///
   qui recode `x' 999=.z
 }
 
- *********************************************************************************************************************************************************
-*   DESCRIPTION OF GENDER IN ECHORN DATASET
+
+*********************************************************************************************************************************************************
+*   DESCRIPTION OF GENDER IN ECHORN DATASET 
 *********************************************************************************************************************************************************
 tab gender siteid, col miss
 
@@ -196,7 +197,7 @@ Not sure what this qu |        20         10         83        166 |       279
 *********************************************************************************************************************************************************
 *   DESCRIPTION OF AGE IN ECHORN DATASET
 *********************************************************************************************************************************************************
-codebook partage // range: 40-91; mean (SD): 57.3 (10.3); median (IQR): 57 (49-64)
+codebook partage // range: 40-91; mean (SD): 57.3 (10.3); median (IQR): 57 (49-64) No missing
 codebook partage if siteid==1  // range: 40-81; mean (SD): 57.1 (9.4); median (IQR): 57 (50-65)
 codebook partage if siteid==2 // range: 40-91; mean (SD): 58.3 (10.6); median (IQR): 57 (51-65)
 codebook partage if siteid==3 // range: 40-88; mean (SD): 57.4 (10.4); median (IQR): 57 (50-65)
@@ -352,10 +353,44 @@ codebook race // 39 "other"
 list D5 if race==7  // 24/39 have classified themselves as other - Bajan! Can these be recoded to Black/Afro-Caribbean? Some of the others look possible to recode also (e.g. Afro-Caribbean, Black)
 
 tab race siteid, col miss
+/*
+race(self-identified |                    Site
+                   ) | US Virgin  Puerto Ri   Barbados  Trinidad  |     Total
+---------------------+--------------------------------------------+----------
+               White |        31        133          3          3 |       170 
+                     |      8.78      17.25       0.30       0.36 |      5.74 
+---------------------+--------------------------------------------+----------
+Black/Afro-Caribbean |       230        105        855        296 |     1,486 
+                     |     65.16      13.62      84.82      35.71 |     50.19 
+---------------------+--------------------------------------------+----------
+               Asian |         0          0          0          1 |         1 
+                     |      0.00       0.00       0.00       0.12 |      0.03 
+---------------------+--------------------------------------------+----------
+         East Indian |         7          0          5        199 |       211 
+                     |      1.98       0.00       0.50      24.00 |      7.13 
+---------------------+--------------------------------------------+----------
+     Hispanic/Latino |        21        149          0          2 |       172 
+                     |      5.95      19.33       0.00       0.24 |      5.81 
+---------------------+--------------------------------------------+----------
+               Mixed |        28        189         32        232 |       481 
+                     |      7.93      24.51       3.17      27.99 |     16.24 
+---------------------+--------------------------------------------+----------
+               Other |         5          4         27          3 |        39 
+                     |      1.42       0.52       2.68       0.36 |      1.32 
+---------------------+--------------------------------------------+----------
+Puerto Rican/Boricua |         2        168          0          0 |       170 
+                     |      0.57      21.79       0.00       0.00 |      5.74 
+---------------------+--------------------------------------------+----------
+                   . |        29         23         86         93 |       231 
+                     |      8.22       2.98       8.53      11.22 |      7.80 
+---------------------+--------------------------------------------+----------
+               Total |       353        771      1,008        829 |     2,961 
+                     |    100.00     100.00     100.00     100.00 |    100.00    */
+
 
 **How do others classify your race/ethnicity?
 tab D6 siteid, col miss
-tab D6 race
+
 
 *********************************************************************************************************************************************************
 *   DESCRIPTION OF RELIGION IN ECHORN DATASET
@@ -405,4 +440,705 @@ tab D61 siteid, col miss
 
 /*Look at this figure with steps numbered 1 at the bottom to 10 at the top. If the ladder represents the richest people of this island and the bottom represents 
 the poorest people of this island, on what number step would you place yourself? */
-histogram D7, by(siteid) width(1)
+*histogram D7, by(siteid) width(1)
+
+
+*********************************************************************************************************************************************************
+*   DESCRIPTION OF EMOTIONAL SUPPORT IN ECHORN DATASET (SE1 - SE4)
+*********************************************************************************************************************************************************
+*I have someone who will listen to me when I need to talk.
+tab SE1 siteid, col miss
+*I have someone to confide in or talk to about myself or my problems.
+tab SE2 siteid, col miss
+*I have someone who makes me feel appreciated.
+tab SE3 siteid, col miss
+*I have someone to talk with when I have a bad day.
+tab SE4 siteid, col miss
+
+*********************************************************************************************************************************************************
+*   DESCRIPTION OF SOCIAL SUPPORT IN ECHORN DATASET (SE7 - SE11)
+*********************************************************************************************************************************************************
+*How many close friends do you have (people you feel at ease with, can talk to about private matters, and can call on for help)?
+codebook SE7 if siteid==1 // USVI: Range: 0-55; missing: 8 (2%); median (IQR): 3 (2,5)
+codebook SE7 if siteid==2 // PR: Range: 0-90; missing: 7 (1%); median (IQR): 3 (2,5) 
+codebook SE7 if siteid==3 //Bds: Range: 0-58; missing: 51 (5%); median (IQR): 3 (1,5)
+codebook SE7 if siteid==4 //T'dad: Range: 0,90; missing: 21 (2%); median (IQR): 3 (2,5)
+
+*How many relatives do you have that you feel close to?
+codebook SE8 if siteid==1 // USVI: Range: 0-80; missing: 3 (1%); median (IQR): 5 (2,8)
+codebook SE8 if siteid==2 // PR: Range: 0-50; missing: 6 (1%); median (IQR): 3 (2,5)  
+codebook SE8 if siteid==3 //Bds: Range: 0-75; missing: 61 (6%); median (IQR): 4 (3,7)
+codebook SE8 if siteid==4 //T'dad: Range: 0-90; missing: 16 (2%); median (IQR): 4 (2,6)  
+
+*How many of these friends or relatives do you see at least once per month?
+codebook SE9 if siteid==1 // USVI: Range: 0-88; missing: 6 (2%); median (IQR): 3 (2,5) 
+codebook SE9 if siteid==2 // PR: Range: 0-91; missing: 6 (1%); median (IQR): 5 (3,8)  
+codebook SE9 if siteid==3 //Bds: Range:0-70; missing: 55 (5%); median (IQR): 4 (2,6)
+codebook SE9 if siteid==4 //T'dad: Range: 0-55; missing: 26 (3%); median (IQR): 4 (2,6) 
+
+*Do you belong to any social, recreational, work, church, or other community groups? (for example, PTA, neighborhood watch, etc.)?
+tab SE10 siteid, col miss
+
+/*  Do you |
+ belong to |
+       any |
+   social, |
+recreation |
+ al, work, |
+church, or |
+     other |
+ community |                    Site
+         g | US Virgin  Puerto Ri   Barbados  Trinidad  |     Total
+-----------+--------------------------------------------+----------
+        No |       162        399        406        423 |     1,390 
+           |     45.89      51.75      40.28      51.03 |     46.94 
+-----------+--------------------------------------------+----------
+       Yes |       188        371        565        401 |     1,525 
+           |     53.26      48.12      56.05      48.37 |     51.50 
+-----------+--------------------------------------------+----------
+         . |         3          1         37          5 |        46 
+           |      0.85       0.13       3.67       0.60 |      1.55 
+-----------+--------------------------------------------+----------
+     Total |       353        771      1,008        829 |     2,961 
+           |    100.00     100.00     100.00     100.00 |    100.00  */
+
+*What is the total number of groups to which you belong?
+recode SE11 .z=0 
+codebook SE11 if siteid==1 // USVI: Range: 0-20; missing: 5 (1%); median (IQR): 1 (0,2) 
+codebook SE11 if siteid==2 // PR: Range: 0-20; missing: 3 (0%); median (IQR): 0 (0,1)
+codebook SE11 if siteid==3 //Bds: Range: 0-20; missing: 6 (1%); median (IQR): 0 (0,1) 
+codebook SE11 if siteid==4 //T'dad: Range: 0-19; missing: 9; median (IQR): 0 (0,2)
+
+
+*********************************************************************************************************************************************************
+*   DESCRIPTION OF PHYSICAL ACTIVITY IN ECHORN DATASET
+*********************************************************************************************************************************************************
+* Starting with looking at prevalence of inactivity according to WHO guidelines: 150 minutes of moderate intensity activity per week OR 75 minutes of vigorous intensity 
+* per week OR an equivalent combination, achieving at least 600 MET-minutes per week. 
+*********************************************************************************************************************************************************
+*------------------------------------------------------------------------------------------------------
+* ACTIVITY AT WORK: Questions HB1 - HB8
+*------------------------------------------------------------------------------------------------------
+*VIGOROUS WORK ACTIVITY (HB1-HB4)
+tab HB1, miss 
+/*
+Does your work |
+        involve |
+vigorous/strenu |
+  ous-intensity |
+  activity that |
+    causes larg |      Freq.     Percent        Cum.
+----------------+-----------------------------------
+             No |      2,429       82.03       82.03
+            Yes |        491       16.58       98.62
+              . |         41        1.38      100.00
+----------------+-----------------------------------
+          Total |      2,961      100.00                */
+
+tab HB2, miss
+/*
+       In a |
+    typical |
+   week, on |
+   how many |
+days do you |
+         do |
+vigorous/st |
+renuous-int |
+  ensity ac |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |         14        0.47        0.47
+          1 |         21        0.71        1.18
+          2 |         59        1.99        3.17
+          3 |         89        3.01        6.18
+          4 |         55        1.86        8.04
+          5 |        136        4.59       12.63
+          6 |         55        1.86       14.49
+          7 |         49        1.65       16.14
+          . |      2,483       83.86      100.00
+------------+-----------------------------------
+      Total |      2,961      100.00             */
+
+* If answered "no" to HB1, then HB2 should have been skipped and "0" days should not have been an option. Need to recode those to .z (not applicable)
+recode HB2 0=.z
+list HB2 if HB1==.
+replace HB2=.z if HB1==0 | HB1==.
+tab HB2, miss
+
+*HB3 asks people to select hours or minutes, then HB4 asks for time spent doing vig activity in the units selected on a typical day
+tab HB3, miss
+tab HB4, miss 
+codebook HB4 if HB3==1  // the range of hours of vig PA at a typical day at work is 0-52. 
+codebook HB4 if HB3==2  // the range of minutes of vig PA at a typical day at work is 0-90
+
+*Calculating min per day for vigorous work
+gen mpdVW=.
+replace mpdVW=(HB4*60) if HB3==1
+replace mpdVW=HB4 if HB3==2
+replace mpdVW=.a if HB4>16 & HB4<. & HB3==1 // according to GPAQ instructions, if more than 16 hours reported in ANY sub-domain, they should be removed from all analyses
+codebook mpdVW 
+
+*Calculating min per week for vigorous work
+gen mpwVW=mpdVW*HB2 
+replace mpwVW=.z if HB2==.z
+
+*Calculating MET-min per week for vigorous work (assuming MET value of 8 for vigorous work)
+gen VWMET=mpwVW*8
+replace VWMET=.z if HB2==.z
+label variable VWMET "MET-min per week from vigorous work"
+*histogram VWMET, by(siteid)
+table siteid, c(median VWMET)
+
+*MODERATE WORK ACTIVITY (HB5 - HB8)
+tab HB5, miss 
+/*
+ Does your work |
+        involve |
+moderate-intens |
+   ity activity |
+    that causes |
+ small increase |      Freq.     Percent        Cum.
+----------------+-----------------------------------
+             No |      1,609       54.34       54.34
+            Yes |      1,313       44.34       98.68
+              . |         39        1.32      100.00
+----------------+-----------------------------------
+          Total |      2,961      100.00                */
+
+tab HB6, miss 
+
+ /*    In a |
+    typical |
+   week, on |
+   how many |
+days do you |
+do moderate |
+  intensity |
+ activities |
+          a |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |         19        0.64        0.64
+          1 |         54        1.82        2.47
+          2 |        140        4.73        7.19
+          3 |        236        7.97       15.16
+          4 |        139        4.69       19.86
+          5 |        376       12.70       32.56
+          6 |        133        4.49       37.05
+          7 |        195        6.59       43.63
+          . |      1,669       56.37      100.00
+------------+-----------------------------------
+      Total |      2,961      100.00                */
+
+* If answered "no" to HB5, then HB6 should have been skipped and "0" days should not have been an option. Need to recode those to .z (not applicable)
+recode HB6 0=.z
+list HB6 if HB5==.
+replace HB6=.z if HB5==0 | HB5==.
+tab HB6, miss
+
+*HB7 asks people to select hours or minutes, then HB8 asks for time spent doing moderate activity in the units selected on a typical day
+tab HB7, miss
+tab HB8, miss 
+codebook HB8 if HB7==1  // the range of hours of moderate PA at a typical day at work is 0-55
+codebook HB8 if HB7==2  // the range of minutes of moderate PA at a typical day at work is 0-90
+
+*Calculating min per day for moderate-intensity work
+gen mpdMW=.
+replace mpdMW=(HB8*60) if HB7==1
+replace mpdMW=HB8 if HB7==2
+replace mpdMW=.a if HB8>16 & HB8<. & HB7==1 // according to GPAQ instructions, if more than 16 hours reported in ANY sub-domain, they should be removed from all analyses
+codebook mpdMW 
+
+*Calculating min per week for moderate intensity work
+gen mpwMW=mpdMW*HB6  
+replace mpwMW=.z if HB6==.z 
+
+*Calculating MET-min per week for moderate intensity work (assuming MET value of 4 for moderate work)
+gen MWMET=mpwMW*4
+replace MWMET=.z if HB6==.z 
+label variable MWMET "MET-min per week from moderate work"
+*histogram MWMET, by(siteid)
+table siteid, c(median MWMET) 
+
+*------------------------------------------------------------------------------------------------------
+* ACTIVITY DURING ACTIVE TRANSPORT: Questions HB9 - HB12
+*------------------------------------------------------------------------------------------------------
+tab HB9, miss 
+
+/* Do you walk or |
+  use a bicycle |
+  (pedal cycle) |
+for at least 10 |
+        minutes |
+     continuous |      Freq.     Percent        Cum.
+----------------+-----------------------------------
+             No |      1,648       55.66       55.66
+            Yes |      1,283       43.33       98.99
+              . |         30        1.01      100.00
+----------------+-----------------------------------
+          Total |      2,961      100.00                */
+
+tab HB10, miss 
+
+/*     In a |
+    typical |
+   week, on |
+   how many |
+days do you |
+    walk or |
+bicycle for |
+at least 10 |
+         mi |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |         11        0.37        0.37
+          1 |         33        1.11        1.49
+          2 |        126        4.26        5.74
+          3 |        203        6.86       12.60
+          4 |        136        4.59       17.19
+          5 |        362       12.23       29.42
+          6 |         87        2.94       32.35
+          7 |        309       10.44       42.79
+          . |      1,694       57.21      100.00
+------------+-----------------------------------
+      Total |      2,961      100.00            */
+
+
+* If answered "no" to HB9, then HB10 should have been skipped and "0" days should not have been an option. Need to recode those to .z (not applicable)
+recode HB10 0=.z
+list HB10 if HB9==.
+replace HB10=.z if HB9==0 | HB9==.
+tab HB10, miss
+
+*HB11 asks people to select hours or minutes, then HB12 asks for time spent in active transport in the units selected on a typical day
+tab HB11, miss
+tab HB12, miss 
+codebook HB12 if HB11==1  // the range of hours spent in active transport is 1-60. 
+codebook HB12 if HB11==2  // the range of minutes spent in active transport is 0-90.
+
+*Calculating min per day for active transport
+gen mpdT=.
+replace mpdT=(HB12*60) if HB11==1
+replace mpdT=HB12 if HB11==2
+replace mpdT=.a if HB12>16 & HB12<. & HB11==1 // according to GPAQ instructions, if more than 16 hours reported in ANY sub-domain, they should be removed from all analyses
+codebook mpdT 
+
+*Calculating min per week for active transport
+gen mpwT=mpdMW*HB10 
+replace mpwT=.z if HB10==.z 
+
+*Calculating MET-min per week for active transport (assuming MET value of 4 for active transport)
+gen TMET=mpwT*4
+replace TMET=.z if HB10==.z 
+label variable TMET "MET-min per week from active transport"
+*histogram TMET, by(siteid)
+table siteid, c(median TMET)
+
+*------------------------------------------------------------------------------------------------------
+* RECREATIONAL ACTIVITY: Questions HB13 - HB20
+*------------------------------------------------------------------------------------------------------
+**VIGOROUS ACTIVITY (questions HB13-HB16)
+tab HB13, miss 
+
+/*Do you do any |
+vigorous/strenu |
+  ous-intensity |
+sports, fitness |
+or recreational |
+             (l |      Freq.     Percent        Cum.
+----------------+-----------------------------------
+             No |      2,395       80.88       80.88
+            Yes |        518       17.49       98.38
+              . |         48        1.62      100.00
+----------------+-----------------------------------
+          Total |      2,961      100.00            */
+
+tab HB14, miss
+
+ /*    In a |
+    typical |
+   week, on |
+   how many |
+days do you |
+         do |
+vigorous/st |
+renuous-int |
+  ensity sp |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |         14        0.47        0.47
+          1 |         59        1.99        2.47
+          2 |        101        3.41        5.88
+          3 |        150        5.07       10.94
+          4 |         78        2.63       13.58
+          5 |         77        2.60       16.18
+          6 |         19        0.64       16.82
+          7 |          9        0.30       17.12
+          . |      2,454       82.88      100.00
+------------+-----------------------------------
+      Total |      2,961      100.00             */
+
+
+
+* If answered "no" to HB13, then HB14 should have been skipped and "0" days should not have been an option. Need to recode those to .z (not applicable)
+recode HB14 0=.z
+list HB14 if HB13==.
+replace HB14=.z if HB13==0 | HB13==.
+tab HB14, miss 
+
+
+*HB15 asks people to select hours or minutes, then HB16 asks for time spent in vigorous recreational activity in the units selected on a typical day
+tab HB15, miss
+tab HB16, miss 
+codebook HB16 if HB15==1  // the range of hours spent in vigorous recreational activity is 1-60. 
+codebook HB16 if HB15==2  // the range of minutes spent in vigorous recreational activity is 0-90.
+
+*Calculating min per day for vigorous recreational activity
+gen mpdVR=.
+replace mpdVR=(HB16*60) if HB15==1
+replace mpdVR=HB16 if HB15==2
+replace mpdVR=.a if HB16>16 & HB16<. & HB15==1 // according to GPAQ instructions, if more than 16 hours reported in ANY sub-domain, they should be removed from all analyses
+codebook mpdVR
+
+*Calculating min per week for vigorous recreational activity
+gen mpwVR=mpdVR*HB14
+replace mpwVR=.z if HB14==.z 
+
+*Calculating MET-min per week for vigorous recreational activity (assuming MET value of 8 for vigorous recreational activity)
+gen VRMET=mpwVR*8
+replace VRMET=.z if HB14==.z 
+label variable VRMET "MET-min per week from vigorous recreational activity"
+*histogram VRMET, by(siteid)
+table siteid, c(median VRMET)
+
+*MODERATE RECREATIONAL ACTIVITY (questions HB17 - HB20)
+tab HB17, miss
+
+/*Do you do any |
+moderate-intens |
+    ity sports, |
+     fitness or |
+   recreational |
+   (leisure) ac |      Freq.     Percent        Cum.
+----------------+-----------------------------------
+             No |      1,849       62.45       62.45
+            Yes |      1,066       36.00       98.45
+              . |         46        1.55      100.00
+----------------+-----------------------------------
+          Total |      2,961      100.00            */
+
+tab HB18, miss
+
+ /* In a |
+    typical |
+   week, on |
+   how many |
+days do you |
+do moderate |
+  intensity |
+    sports, |
+       fitn |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |         40        1.35        1.35
+          1 |         81        2.74        4.09
+          2 |        222        7.50       11.58
+          3 |        306       10.33       21.92
+          4 |        151        5.10       27.02
+          5 |        162        5.47       32.49
+          6 |         40        1.35       33.84
+          7 |         50        1.69       35.53
+          . |      1,909       64.47      100.00
+------------+-----------------------------------
+      Total |      2,961      100.00               */
+
+
+* If answered "no" to HB17, then HB18 should have been skipped and "0" days should not have been an option. Need to recode those to .z (not applicable)
+recode HB18 0=.z
+list HB18 if HB17==.
+replace HB18=.z if HB17==0 | HB17==.
+tab HB18, miss 
+
+*HB19 asks people to select hours or minutes, then HB20 asks for time spent in moderate recreational activity in the units selected on a typical day
+tab HB19, miss
+tab HB20, miss 
+codebook HB20 if HB19==1  // the range of hours spent in moderate recreational activity is 0-7. 
+codebook HB20 if HB19==2  // the range of minutes spent in moderate recreational activity is 0-7. 
+*It's strange that the hours and minutes values all fall between 1 and 7. Can we check whether options for days of the week were given in error? The data dictionary says it was a free text response
+
+*Calculating min per day for moderate recreational activity
+gen mpdMR=.
+replace mpdMR=(HB20*60) if HB19==1
+replace mpdMR=HB20 if HB19==2
+replace mpdMR=.a if HB20>16 & HB20<. & HB19==1 // according to GPAQ instructions, if more than 16 hours reported in ANY sub-domain, they should be removed from all analyses
+codebook mpdMR
+
+*Calculating min per week for moderate recreational activity
+gen mpwMR=mpdMR*HB18
+replace mpwMR=.z if HB18==.z 
+
+*Calculating MET-min per week for moderate recreational activity (assuming MET value of 4 for moderate recreational activity)
+gen MRMET=mpwMR*4
+replace MRMET=.z if HB18==.z 
+label variable MRMET "MET-min per week from moderate recreational activity"
+*histogram MRMET, by(siteid)
+table siteid, c(median MRMET) 
+
+*------------------------------------------------------------------------------------------------------
+* TOTAL MET MINUTES PER WEEK AND INACTIVITY PREVALENCE
+*------------------------------------------------------------------------------------------------------
+/* GPAQ analysis guide states that if either of the following conditions are met, the respondent should be removed from all analyses, resulting in the same denominator across 
+all domains and analyses: 
+1) More than 16 hours reported in ANY sub-domain
+2) Inconsistent answers (e.g. 0 days reported, but values >0 in corresponding time variables)
+*/
+
+generate PAclean=1
+replace PAclean=0 if mpdVW==.a | mpdMW==.a | mpdT==.a | mpdVR==.a | mpdMR==.a 
+replace PAclean=0 if HB1==0 & HB2>=1 & HB2<=7 
+replace PAclean=0 if HB5==0 & HB6>=1 & HB6<=7 
+replace PAclean=0 if HB9==0 & HB10>=1 & HB10<=7
+replace PAclean=0 if HB13==0 & HB14>=1 & HB14<=7  
+replace PAclean=0 if HB17==0 & HB18>=1 & HB18<=7  
+
+*TOTAL MET MINUTES PER WEEK FROM ALL DOMAINS
+egen totMETmin=rowtotal(VWMET MWMET TMET VRMET MRMET)
+replace totMETmin=. if PAclean==0
+gen inactive=.
+replace inactive=1 if totMETmin<600
+replace inactive=0 if totMETmin>=600 & totMETmin<.
+label variable inactive "inactive WHO recommendations"
+label define inactive 0 "active" 1 "inactive"
+label values inactive inactive 
+tab inactive siteid, col miss 
+tab inactive siteid if gender==1, col miss
+tab inactive siteid if gender==2, col miss
+
+
+/*inactive |
+       WHO |
+recommenda |                    Site
+     tions | US Virgin  Puerto Ri   Barbados  Trinidad  |     Total
+-----------+--------------------------------------------+----------
+    active |       160        273        555        429 |     1,417 
+           |     45.33      35.41      55.06      51.75 |     47.86 
+-----------+--------------------------------------------+----------
+  inactive |       189        493        449        393 |     1,524 
+           |     53.54      63.94      44.54      47.41 |     51.47 
+-----------+--------------------------------------------+----------
+         . |         4          5          4          7 |        20 
+           |      1.13       0.65       0.40       0.84 |      0.68 
+-----------+--------------------------------------------+----------
+     Total |       353        771      1,008        829 |     2,961 
+           |    100.00     100.00     100.00     100.00 |    100.00 */
+
+tab inactive gender if siteid==3 & partage>=45 & partage<65, col miss // comparing to HotN RPAQ out of interest in 45-64 age group (inactive men: 35%; women: 63%) 
+
+ /*inactive|
+       WHO |
+recommenda |        Gender
+     tions |      Male     Female |     Total
+-----------+----------------------+----------
+    active |       117        230 |       347 
+           |     63.24      52.39 |     55.61 
+-----------+----------------------+----------
+  inactive |        67        208 |       275 
+           |     36.22      47.38 |     44.07 
+-----------+----------------------+----------
+         . |         1          1 |         2 
+           |      0.54       0.23 |      0.32 
+-----------+----------------------+----------
+     Total |       185        439 |       624 
+           |    100.00     100.00 |    100.00  */
+
+
+
+*********************************************************************************************************************************************************
+*   DESCRIPTION OF BINGE DRINKING IN ECHORN DATASET 
+*********************************************************************************************************************************************************
+*(Ask of Men Only) Considering all types of alcoholic beverages, how many times during the past 30 days did you have five or more drinks on an occasion?
+codebook HB57M 
+*(Ask of Women Only) Considering all types of alcoholic beverages, how many times during the past 30 days did you have four or more drinks on an occasion?
+codebook HB57W
+*generate variable to describe prevalence of binge drinking in the past 30 days
+gen binge=.
+replace binge=1 if HB57M>=1 & HB57M<. 
+replace binge=0 if HB57M==0 
+replace binge=0 if HB57M==.z & gender==1  
+replace binge=1 if HB57W>=1 & HB57W<. 
+replace binge=0 if HB57W==0 
+replace binge=0 if HB57W==.z & gender==2
+*consistency checks: did people who never consumed an alcoholic drink in their life enter an age they started drinking alcohol or say that they currently drink alcohol?
+list key if HB46==0 & HB47!=.z 
+list key if HB46==0 & HB55!=.z 
+*prevalence of binge drinking
+label variable binge "at least 1 episode of binge drinking in past 30 days"
+label define binge 0 "No binge drinking" 1 "Binge drinking"
+label values binge binge 
+tab binge siteid, col miss 
+*men
+tab binge siteid if gender==1, col miss
+*women
+tab binge siteid if gender==2, col miss
+
+*********************************************************************************************************************************************************
+*   DESCRIPTION OF CURRENT TOBACCO SMOKING IN ECHORN DATASET 
+*********************************************************************************************************************************************************
+tab HB26 siteid, col miss 
+gen csmoke=.
+replace csmoke=0 if HB26==0 | HB26==.z 
+replace csmoke=1 if HB26==1
+label variable csmoke "current regular smoker"
+label define csmoke 0 "Non-smoker" 1 "Current regular smoker"
+label values csmoke csmoke
+tab csmoke siteid, miss col 
+
+/*
+      current regular |                    Site
+               smoker | US Virgin  Puerto Ri   Barbados  Trinidad  |     Total
+----------------------+--------------------------------------------+----------
+           Non-smoker |       319        676        923        730 |     2,648 
+                      |     90.37      87.68      91.57      88.06 |     89.43 
+----------------------+--------------------------------------------+----------
+Current regular smoke |        17         92         38         83 |       230 
+                      |      4.82      11.93       3.77      10.01 |      7.77 
+----------------------+--------------------------------------------+----------
+                    . |        17          3         47         16 |        83 
+                      |      4.82       0.39       4.66       1.93 |      2.80 
+----------------------+--------------------------------------------+----------
+                Total |       353        771      1,008        829 |     2,961 
+                      |    100.00     100.00     100.00     100.00 |    100.00  */
+
+                      
+
+********************************************************************************************************************
+* Missing report by variable
+********************************************************************************************************************
+*Create indicator variable for missing
+foreach x in  partage  GH62     GH188    GH274    HC66A    RPH57    HB53     D33D     D97 ///
+GH1      GH63     GH189    GH275    HC66B    RPH58    HB54     D33E     NU1  ///
+GH2      GH65     GH190    GH277A   HC66C    RPH59    HB55     D33F     NU4  ///
+GH3      GH66     GH191    GH277B   HC66D    RPH60    HB56     D33G     NU5  ///
+GH4      GH67     GH192    GH277C   HC66E    RPH61    HB57M    D33H     NU7  ///
+GH5      GH69     GH193C   GH277D   HC66F    RPH62    HB57W    D33I     NU8 ///
+GH6      GH70     GH213    GH278    HC66G    RPH63    HB58     D33Z     NU9 ///
+GH7      GH71     GH214    GH279    HC66Z    RPH64    HB59     D35      NU10 ///
+GH8      GH73     GH216    GH281    HC68     RPH65    HB60     D36W     NU12 ///
+GH9      GH74     GH218    GH282    HC71     RPH66    HB61     D36M     NU13 ///
+GH10     GH75     GH219    GH284    HC72     RPH67    HB62     D36A     NU14 ///
+GH11     GH77     GH220    GH285    HC73     RPH69A   HB63     D37W     NU16 ///
+GH12     GH78     GH221    GH286    HC75     RPH69B   HB64     D37M     NU18 ///
+GH13     GH79     GH222    HC1      HC76     RPH69C   HB65     D37A     NU19 ///
+GH15     GH81     GH223    HC2      HC79     RPH69D   HB66     D38W     NU20 ///
+GH16     GH82     GH224    HC3      HC80     RPH69E   HB67     D38M     NU21 ///
+GH18     GH83     GH225    HC5      HC83     RPH70    HB68     D38A     NU22 ///
+GH19     GH85     GH226    HC6      HC84     RPH71    HB69     D43      NU23 ///
+GH20     GH86     GH227    HC7A     HC87     RPH72    HB70     D44A     NU24 ///
+GH22     GH87     GH228    HC7B     HC88     RPH74    HB71     D44B     NU25 ///
+GH23     GH89     GH231    HC7C     HC91     RPH75A   HB72     D44C     NU26 ///
+GH25     GH90     GH232    HC7D     HC92     RPH75B   HB73     D44D     NU27 ///
+GH26     GH91     GH233A   HC7E     HC95     RPH75C   HB74     D44E     NU28 ///
+GH31     GH93     GH233B   HC7F     HC96     RPH75D   HB75     D44F     NU29 ///
+GH32     GH94     GH233C   HC7G     HC99     RPH75E   HB76     D44G     NU31 ///
+GH35     GH95     GH233D   HC7H     HC100    RPH76    HB77     D44H     NU33 ///
+GH37     GH97     GH234    HC8A     HC103    RPH77    HB78     D45      NU34 ///
+GH13AB   GH98     GH235    HC8B     HC104    RPH78    HB79     D46      NU35 ///
+GH24A    GH99     GH236A   HC8C     HC107    RPH79    HB80     D47      NU37 ///
+GH24B    GH101    GH236B   HC8D     HC108    RPH81    HB81     D48      NU38 ///
+GH24C    GH102    GH236C   HC9      HC109    RPH82    HB82     D49      NU40 ///
+GH24D    GH103    GH236D   HC10     HC110A   RPH83    HB83     D50      NU41 ///
+GH24E    GH105    GH236E   HC11     HC110B   RPH84    HB84     D51      NU43 ///
+siteid   GH106    GH236F   HC12     HC110C   RPH85    HB85     D52      NU44 ///
+date     GH107    GH236G   HC13     HC110D   RPH86    HB86     D53A     NU45 ///
+gender   GH109    GH236H   HC14     HC110E   RPH87    HB87     D53B     NU46 ///
+GH13AA   GH110    GH236I   HC15     HC111    RPH88    HB89     D53C     NU47 ///
+GH13AC   GH111    GH236J   HC16     RPH1     RPH89    HB90     D53D     NU48 ///
+GH13AD   GH113    GH236K   HC17     RPH2     RPH90    HB91     D53E     NU49 ///
+GH13AE   GH114    GH236L   HC18     RPH3     RPH91    HB92     D53F     NU50 ///
+GH13AF   GH115    GH237A   HC19     RPH4     RPH92    HB93     D54A     NU51 ///
+GH13AG   GH117    GH237B   HC35     RPH6     RPH93    HB94     D54B     NU52 ///
+GH13AH   GH118    GH237C   HC36     RPH5     RPH94    HB95     D54C     NU53 ///
+GH13AI   GH119    GH237D   HC37     RPH7     RPH95    HB96     D54D     NU54 ///
+GH13AJ   GH121    GH237E   HC41A    RPH8     RPH96    HB97     D54E     NU55 ///
+GH13AK   GH122    GH237F   HC41B    RPH9     RPH97    SE1      D55      NU56 ///
+GH13AL   GH123    GH237G   HC41C    RPH10A   RPH98    SE2      D56A     NU57 ///
+GH13AM   GH125    GH237H   HC41D    RPH10B   RPH100   SE3      D56B     NU58 ///
+GH13AN   GH126    GH237I   HC41E    RPH10C   RPH101   SE4      D56C     NU59 ///
+GH13AO   GH127    GH237J   HC41F    RPH10D   RPH102   SE5      D56D     NU60 ///
+GH17     GH129    GH237K   HC41G    RPH10E   RPH103   SE6      D56E     NU61 ///
+GH21     GH130    GH238A   HC41Z    RPH10F   HB1      SE7      D56F     NU62 ///
+GH24     GH131    GH238B   HC44     RPH10G   HB2      SE8      D57A     NU63 ///
+GH27     GH133    GH238C   HC45A    RPH10H   HB3      SE9      D57B     NU64 ///
+GH28     GH134    GH238D   HC45B    RPH10I   HB4      SE10     D57C     NU65 ///
+GH29A    GH135    GH238E   HC45C    RPH10J   HB5      SE11     D57D     NU66 ///
+GH29B    GH137    GH238F   HC45D    RPH10K   HB6      SE12     D57E     NU67 ///
+GH29C    GH138    GH238G   HC45E    RPH10L   HB7      SE13     D58      NU68 ///
+GH29D    GH139    GH238H   HC45F    RPH10M   HB8      SE14     D59      NU69 ///
+GH29E    GH141    GH238I   HC45Z    RPH10N   HB9      SE15     D60      NU70 ///
+GH30     GH142    GH238J   HC46C    RPH10O   HB10     SE16     D61      NU71 ///
+GH33     GH143    GH238K   HC46D    RPH11    HB11     SE17     D62      NU72 ///
+GH34     GH146    GH238L   HC46E    RPH12    HB12     SE18     D63      NU73 ///
+GH36     GH147    GH238M   HC46Z    RPH13    HB13     SE19     D64A     NU74 ///
+GH38A    GH148    GH239A   HC48     RPH14    HB14     SE20     D64B     NU75 ///
+GH38B    GH150    GH239B   HC49     RPH15    HB15     SE21     D64C     NU76 ///
+GH38C    GH151    GH239C   HC50A    RPH16    HB16     SE22     D64D     NU77 ///
+GH38D    GH152    GH239D   HC50B    RPH17    HB17     SE23     D64E     NU78 ///
+GH38E    GH154    GH239E   HC50C    RPH18    HB18     SE24     D64F     NU79 ///
+GH38F    GH155    GH239F   HC50D    RPH19    HB19     SE25     D64G     NU80 ///
+GH38G    GH156    GH239G   HC50E    RPH20    HB20     SE26     D64H     NU81 ///
+GH38H    GH157    GH239H   HC50F    RPH21    HB21     D1       D64I     NU82 ///
+GH38I    GH158    GH239I   HC50G    RPH22    HB22     D3       D64J     NU83 ///
+GH38J    GH159    GH239J   HC50H    RPH23    HB23     D4A      D64K     NU84 ///
+GH38K    GH160    GH240    HC50I    RPH24    HB24     D4B      D64L     NU85 ///
+GH38L    GH161A   GH241    HC50J    RPH25    HB25     D4C      D65      NU86 ///
+GH38M    GH161B   GH242    HC50Z    RPH26    HB26     D4D      D66      NU87 ///
+GH38N    GH161C   GH243    HC51A    RPH27    HB27     D4E      D67      NU88 ///
+GH38O    GH161D   GH244    HC51B    RPH28    HB28     D4F      D68      NU89 ///
+GH38P    GH161E   GH245    HC51C    RPH29    HB29     D4G      D69      NU90 ///
+GH38Q    GH161F   GH246    HC51D    RPH30A   HB30     D4H      D70      NU91 ///
+GH38R    GH161Z   GH247    HC51E    RPH30B   HB31     D4I      D71      NU92 ///
+GH38S    GH163    GH248    HC51F    RPH30C   HB32              D72      NU93 ///
+GH38T    GH164    GH249    HC51G    RPH30D   HB33              D74      NU94 ///
+GH38U    GH165    GH250    HC52     RPH30E   HB34     D6       D75      NU95 ///
+GH38V    GH166    GH251    HC53A    RPH30F   HB35     D7       D76      NU96 ///
+GH38W    GH167    GH252    HC53B    RPH30G   HB36     D8       D78      NU97 ///
+GH39FA   GH168    GH253    HC53C    RPH30H   HB37A    D9       D79      NU98 ///
+GH39FB   GH169    GH254    HC53D    RPH30I   HB37B    D10      D81      NU99A ///
+GH39FZ   GH170A   GH255    HC53Y    RPH32    HB37C    D11      D82      NU99B ///
+GH39FC   GH170B   GH256A   HC54     RPH33A   HB37D    D12      D83      NU99C ///
+GH39MA   GH170C   GH256B   HC55     RPH33B   HB37E    D13      D83tt    NU100 ///
+GH39MB   GH170D   GH256C   HC56     RPH33C   HB37F    D14      D84      NU101 /// 
+GH39MZ   GH170E   GH256D   HC57A    RPH33D   HB38     D16      D85      NU102 ///
+GH41     GH170Z   GH256E   HC57B    RPH33E   HB39     D17      D86      NU104A ///
+GH42     GH172    GH256Z   HC57C    RPH33F   HB40     D18      D87      NU104B ///
+GH43     GH173    GH258    HC57D    RPH33G   HB41     D19      D88      NU104C ///
+GH45     GH174    GH259    HC57E    RPH33H   HB42     D20      D89      NU104D ///
+GH46     GH175    GH261    HC57F    RPH33I   HB43     D21      D90      NU104E ///
+GH47     GH176    GH263A   HC57G    RPH33J   HB44     D22      D91A     NU104F ///
+GH49     GH177    GH263B   HC57Z    RPH33K   HB45     D23      D91B     NU104G ///
+GH50     GH178    GH263C   HC59     RPH49    HB46     D24      D91C     NU105 ///
+GH51     GH179    GH263D   HC62     RPH50    HB47     D25      D92      NU106 ///
+GH53     GH180    GH264    HC63     RPH51    HB48     D28      D93A     NU107 ///
+GH54     GH182    GH265    HC65A    RPH52    HB49     D30      D93B      ///
+GH55     GH183    GH267    HC65B    RPH53    HB50     D31      D93C ///
+GH57     GH184    GH269    HC65C    RPH54    HB51A    D32      D93D ///
+GH58     GH184C   GH270    HC65D    RPH55    HB51B    D33A     D94 ///
+GH59     GH185    GH271    HC65E    RPH56M   HB51C    D33B     D95 ///
+GH61     GH187    GH273    HC65F    RPH56Y   HB52     D33C     D96 {
+  
+  qui gen `x'miss=0
+  qui replace `x'miss=1 if `x'==.z
+}
+
+
+/* Variable groups are as follows:
+Description           Variable name
+Gender                gender
+Age                   partage 
+Education             D13 (derived: educ)
+Employment            D20
+Race/ethnicity        D4A D4B D4C D4D D4E D4F D4G D4H D4I (derived: race)
+Religion              D14 D16 D18 D19
+Income                D36A D36M D36W D37A D37M D37W D38A D38M D38W
+Emotional support     SE1 - SE4
+Social support        SE7 - SE11
+Physical activity     HB1 - HB20 (derived: inactive)
+Binge drinking        HB57M HB57F (derived: binge)
+              
+*/
