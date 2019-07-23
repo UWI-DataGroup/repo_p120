@@ -238,6 +238,8 @@ label define agegr 1 "40-49" 2 "50-59" 3 "60-69" 4 "70+"
 label values agegr agegr
 
 
-***Save weights data file
+***Save weights dataset
 save "`datapath'\version02\2-working\ECHORN_weights", replace
 
+**merge with ECHORN dataset
+ 
