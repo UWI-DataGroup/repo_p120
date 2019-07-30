@@ -162,8 +162,9 @@ GH61     GH187    GH273    HC65F    RPH56Y   HB52     D33C     D96 ///
 
 *merge with weights file
 merge m:1 siteid gender agegr using "X:\The University of the West Indies\DataGroup - repo_data\data_p120\version02\2-working\ECHORN_weights.dta"
-order agegr wt2010 wt2011 wt2012 wt2013 wt2014 wt2015 _merge, after (partage)
+order agegr un2010 un2011 un2012 un2013 un2013 un2014 un2015 UScb2010 UScb2015 _merge, after (partage)
 order siteid, before (partage)
 order gender, before (partage)
+drop _merge
 
 save "`datapath'\version02\2-working\survey_wave1_weighted", replace

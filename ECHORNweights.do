@@ -109,7 +109,8 @@ drop grp1 grp2 grp3 grp4 popgender
 
 rename Countrycode cid
 
-
+***Save population proportions dataset
+save "`datapath'\version02\2-working\ECHORN_popprops", replace
 
 
 
@@ -140,6 +141,7 @@ age_grp	male	% respondents
 
 
 gen percsample=.
+**BARBADOS
 *men
 replace percsample = 7.1 if cid==52 & gender==1 & agegr==40 
 replace percsample = 9.1 if cid==52 & gender==1 & agegr==50 
@@ -163,6 +165,7 @@ age_grp	male	% respondents
 60-69	Female	17.8
 70+	    Female	10.5 */
 
+**PUERTO RICO
 *men
 replace percsample = 7.9 if cid==630 & gender==1 & agegr==40 
 replace percsample = 12.2 if cid==630 & gender==1 & agegr==50 
@@ -186,6 +189,7 @@ age_grp	male	% respondents
 60-69	Female	15.4
 70+	    Female	6.8   */
 
+**T'DAD
 *men
 replace percsample = 11.2 if cid==780 & gender==1 & agegr==40 
 replace percsample = 13.9 if cid==780 & gender==1 & agegr==50 
@@ -210,6 +214,7 @@ age_grp	male	% respondents
 60-69	Female	17.3
 70+	    Female	6.8   */
 
+**USVI
 *men
 replace percsample = 8.8 if cid==850 & gender==1 & agegr==40 
 replace percsample = 15.9 if cid==850 & gender==1 & agegr==50 
@@ -223,11 +228,119 @@ replace percsample = 6.8 if cid==850 & gender==2 & agegr==70
 
 
 **GENERATE WEIGHT 
-gen wt =. 
-replace wt=prPOP/(percsample/100)
+gen un =. 
+replace un=prPOP/(percsample/100)
 drop totpop prPOP percsample
-reshape wide wt, i (cid gender agegr) j (year)
+reshape wide un, i (cid gender agegr) j (year)
 
+*add in weight based on US census bureau 2015
+gen UScb2015=.
+
+**BARBADOS
+*men
+replace UScb2015 = 2.333 if cid==52 & gender==1 & agegr==40 
+replace UScb2015 = 1.655 if cid==52 & gender==1 & agegr==50 
+replace UScb2015 = 0.995 if cid==52 & gender==1 & agegr==60 
+replace UScb2015 = 1.164 if cid==52 & gender==1 & agegr==70 
+*women
+replace UScb2015 = 0.96 if cid==52 & gender==2 & agegr==40 
+replace UScb2015 = 0.642 if cid==52 & gender==2 & agegr==50 
+replace UScb2015 = 0.630 if cid==52 & gender==2 & agegr==60 
+replace UScb2015 = 1.000 if cid==52 & gender==2 & agegr==70 
+
+**PUERTO RICO
+*men
+replace UScb2015 = 1.535 if cid==630 & gender==1 & agegr==40 
+replace UScb2015 = 0.996 if cid==630 & gender==1 & agegr==50 
+replace UScb2015 = 1.222 if cid==630 & gender==1 & agegr==60 
+replace UScb2015 = 2.038 if cid==630 & gender==1 & agegr==70 
+*women
+replace UScb2015 = 0.985 if cid==630 & gender==2 & agegr==40 
+replace UScb2015 = 0.589 if cid==630 & gender==2 & agegr==50 
+replace UScb2015 = 0.727 if cid==630 & gender==2 & agegr==60 
+replace UScb2015 = 1.341 if cid==630 & gender==2 & agegr==70 
+
+**T'DAD
+*men
+replace UScb2015 = 1.432 if cid==780 & gender==1 & agegr==40 
+replace UScb2015 = 1.250 if cid==780 & gender==1 & agegr==50 
+replace UScb2015 = 1.161 if cid==780 & gender==1 & agegr==60 
+replace UScb2015 = 1.203 if cid==780 & gender==1 & agegr==70 
+*women
+replace UScb2015 = 0.817 if cid==780 & gender==2 & agegr==40 
+replace UScb2015 = 0.792 if cid==780 & gender==2 & agegr==50 
+replace UScb2015 = 0.693 if cid==780 & gender==2 & agegr==60 
+replace UScb2015 = 1.258 if cid==780 & gender==2 & agegr==70 
+
+**USVI
+*men
+replace UScb2015 = 1.385 if cid==850 & gender==1 & agegr==40 
+replace UScb2015 = 0.864 if cid==850 & gender==1 & agegr==50 
+replace UScb2015 = 1.062 if cid==850 & gender==1 & agegr==60 
+replace UScb2015 = 2.314 if cid==850 & gender==1 & agegr==70 
+*women
+replace UScb2015 = 0.850 if cid==850 & gender==2 & agegr==40 
+replace UScb2015 = 0.745 if cid==850 & gender==2 & agegr==50 
+replace UScb2015 = 0.791 if cid==850 & gender==2 & agegr==60 
+replace UScb2015 = 1.595 if cid==850 & gender==2 & agegr==70
+*/
+
+*add in weight based on US census bureau 2010
+gen UScb2010=.
+
+**BARBADOS
+*men
+replace UScb2010 = 2.602 if cid==52 & gender==1 & agegr==40 
+replace UScb2010 = 1.621 if cid==52 & gender==1 & agegr==50 
+replace UScb2010 = 0.799 if cid==52 & gender==1 & agegr==60 
+replace UScb2010 = 1.123 if cid==52 & gender==1 & agegr==70 
+*women
+replace UScb2010 = 1.083 if cid==52 & gender==2 & agegr==40 
+replace UScb2010 = 0.652 if cid==52 & gender==2 & agegr==50 
+replace UScb2010 = 0.521 if cid==52 & gender==2 & agegr==60 
+replace UScb2010 = 0.993 if cid==52 & gender==2 & agegr==70 
+
+**PUERTO RICO
+*men
+replace UScb2010 = 1.694 if cid==630 & gender==1 & agegr==40 
+replace UScb2010 = 1.017 if cid==630 & gender==1 & agegr==50 
+replace UScb2010 = 1.194 if cid==630 & gender==1 & agegr==60 
+replace UScb2010 = 1.811 if cid==630 & gender==1 & agegr==70 
+*women
+replace UScb2010 = 1.108 if cid==630 & gender==2 & agegr==40 
+replace UScb2010 = 0.605 if cid==630 & gender==2 & agegr==50 
+replace UScb2010 = 0.702 if cid==630 & gender==2 & agegr==60 
+replace UScb2010 = 1.174 if cid==630 & gender==2 & agegr==70 
+
+**T'DAD
+*men
+replace UScb2010 = 1.738 if cid==780 & gender==1 & agegr==40 
+replace UScb2010 = 1.126 if cid==780 & gender==1 & agegr==50 
+replace UScb2010 = 1.013 if cid==780 & gender==1 & agegr==60 
+replace UScb2010 = 1.081 if cid==780 & gender==1 & agegr==70 
+*women
+replace UScb2010 = 1.030 if cid==780 & gender==2 & agegr==40 
+replace UScb2010 = 0.720 if cid==780 & gender==2 & agegr==50 
+replace UScb2010 = 0.611 if cid==780 & gender==2 & agegr==60 
+replace UScb2010 = 1.135 if cid==780 & gender==2 & agegr==70 
+
+**USVI
+*men
+replace UScb2010 = 1.883 if cid==850 & gender==1 & agegr==40 
+replace UScb2010 = 1.021 if cid==850 & gender==1 & agegr==50 
+replace UScb2010 = 1.328 if cid==850 & gender==1 & agegr==60 
+replace UScb2010 = 2.054 if cid==850 & gender==1 & agegr==70 
+*women
+replace UScb2010 = 1.144 if cid==850 & gender==2 & agegr==40 
+replace UScb2010 = 0.908 if cid==850 & gender==2 & agegr==50 
+replace UScb2010 = 0.918 if cid==850 & gender==2 & agegr==60 
+replace UScb2010 = 1.433 if cid==850 & gender==2 & agegr==70
+
+
+label variable UScb2010 "US census bureau 2010"
+label variable UScb2015 "US census bureau 2015"
+
+***************************************************************************************************************************
 *changing names and coding to match ECHORN data file
 rename cid siteid
 recode siteid 850=1 630=2 52=3 780=4
@@ -237,9 +350,32 @@ recode agegr 40=1 50=2 60=3 70=4
 label define agegr 1 "40-49" 2 "50-59" 3 "60-69" 4 "70+"
 label values agegr agegr
 
-
-***Save weights dataset
+***Save UN weights dataset
 save "`datapath'\version02\2-working\ECHORN_weights", replace
 
-**merge with ECHORN dataset
  
+/*************************************************************************************************************************************
+**  CREATE WEIGHTS BASED ON US CENSUS BUREAU INTERNATIONAL DATABASE
+*************************************************************************************************************************************
+
+import excel "`datapath'\version02\1-input\US2010_2015.xls", sheet("Sheet1") firstrow clear
+
+gen siteid=.
+replace siteid=1 if Country=="Virgin Islands, U.S."
+replace siteid=2 if Country=="Puerto Rico"
+replace siteid=3 if Country=="Barbados"
+replace siteid=4 if Country=="Trinidad and Tobago"
+label define siteid 1 "USVI" 2 "PR" 3 "Bdos" 4 "Tdad"
+label values siteid siteid
+
+*get rid of unnecessary variables
+drop PercentBothSexes PercentMale PercentFemale SexRatio Country
+order siteid, before(Year)
+*sort out age
+encode Age, gen(Age5)
+drop Age
+
+
+/*
+gen id=_n
+reshape wide BothSexesPopulation MalePopulation FemalePopulation, i (id) j(Year)

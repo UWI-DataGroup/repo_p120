@@ -969,4 +969,58 @@ tab inactive siteid, col nofreq miss
 tab binge siteid, col nofreq miss 
 
 
+********************************************************************************************************************
+* Application of different weights to self-reported diabetes
+********************************************************************************************************************
 
+*UN 2010
+svyset siteid [pweight=un2010]
+*USVI
+svy: tab GH184 gender if siteid==1, miss perc col 
+*PR
+svy: tab GH184 gender if siteid==2, miss perc col 
+*Barbados
+svy: tab GH184 gender if siteid==3, miss perc col 
+*Trinidad
+svy: tab GH184 gender if siteid==4, miss perc col 
+svyset, clear
+
+
+*UN 2015
+svyset siteid [pweight=un2015]
+*USVI
+svy: tab GH184 gender if siteid==1, miss perc col 
+*PR
+svy: tab GH184 gender if siteid==2, miss perc col 
+*Barbados
+svy: tab GH184 gender if siteid==3, miss perc col 
+*Trinidad
+svy: tab GH184 gender if siteid==4, miss perc col 
+svyset, clear
+
+
+
+*UScb 2010
+svyset siteid [pweight=UScb2010]
+*USVI
+svy: tab GH184 gender if siteid==1, miss perc col 
+*PR
+svy: tab GH184 gender if siteid==2, miss perc col 
+*Barbados
+svy: tab GH184 gender if siteid==3, miss perc col 
+*Trinidad
+svy: tab GH184 gender if siteid==4, miss perc col 
+svyset, clear
+
+
+*UScb 2015
+svyset siteid [pweight=UScb2015]
+*USVI
+svy: tab GH184 gender if siteid==1, miss perc col 
+*PR
+svy: tab GH184 gender if siteid==2, miss perc col 
+*Barbados
+svy: tab GH184 gender if siteid==3, miss perc col 
+*Trinidad
+svy: tab GH184 gender if siteid==4, miss perc col 
+svyset, clear
