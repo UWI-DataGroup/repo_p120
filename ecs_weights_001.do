@@ -1,5 +1,5 @@
 **  DO-FILE METADATA
-//  algorithm name						ECHORNweights
+//  algorithm name						ecs_weights_001
 //  project:							ECHORN CVD risk analysis
 //  analysts:							Christina HOWITT
 //	date last modified		            22-July-2019
@@ -19,7 +19,7 @@ local logpath X:\OneDrive - The University of the West Indies\repo_datagroup\rep
 
 ** Close any open log fileand open a new log file
 capture log close
-cap log using "`logpath'\echorn_weights_001", replace
+cap log using "`logpath'\ecs_weights_001", replace
 
 ***************************************************************************************************************************************************
 ** PROPORTIONS OF MEN IN 10 YEAR AGE GROUPS IN B'DOS, T'DAD, USVI, AND PR

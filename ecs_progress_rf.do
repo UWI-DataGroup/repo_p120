@@ -1,5 +1,5 @@
 **  DO-FILE METADATA
-//  algorithm name						cvd_risk
+//  algorithm name						ecs_progress_rf
 //  project:							ECHORN CVD analysis
 //  analysts:							Christina HOWITT
 //	date last modified		                  22-July-2019
@@ -19,7 +19,7 @@ local logpath X:\OneDrive - The University of the West Indies\repo_datagroup\rep
 
 ** Close any open log fileand open a new log file
 capture log close
-cap log using "`logpath'\cvd_risk_001", replace
+cap log using "`logpath'\ecs_progress_rf", replace
 
 **Open dataset
 use "`datapath'\version02\2-working\survey_wave1_weighted", clear 

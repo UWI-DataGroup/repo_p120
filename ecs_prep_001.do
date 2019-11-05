@@ -1,5 +1,5 @@
 **  DO-FILE METADATA
-//  algorithm name						Data prep
+//  algorithm name				ecs_prep_001
 //  project:							ECHORN CVD analysis
 //  analysts:							Christina HOWITT
 //	date last modified		            22-July-2019
@@ -19,7 +19,7 @@ local logpath X:\OneDrive - The University of the West Indies\repo_datagroup\rep
 
 ** Close any open log fileand open a new log file
 capture log close
-cap log using "`logpath'\ECHORN_dataprep", replace
+cap log using "`logpath'\ecs_prep_001", replace
 
 **Open dataset
 use "`datapath'\version02\1-input\survey_wave1.dta", clear 
