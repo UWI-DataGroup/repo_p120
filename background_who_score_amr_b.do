@@ -1,6 +1,6 @@
 ** HEADER -----------------------------------------------------
 **  DO-FILE METADATA
-    //  algorithm name					who_score_amr_b.do
+    //  algorithm name					background_who_score_amr_b.do
     //  project:				        Pediatric ECHORN (P-ECS)
     //  analysts:				       	Ian HAMBLETON
     // 	date last modified	    26-MAR-2019
@@ -21,7 +21,7 @@
 
     ** Close any open log file and open a new log file
     capture log close
-    log using "`logpath'\who_score_amr_b", replace
+    log using "`logpath'\background_who_score_amr_b", replace
 ** HEADER -----------------------------------------------------
 
 *******************************************************************************
