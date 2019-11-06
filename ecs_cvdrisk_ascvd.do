@@ -85,6 +85,16 @@ label define _sex 1 "female" 0 "male",modify
 label values ascvd_sex _sex 
 label var ascvd_sex "Participant sex (0=male, 1=female)"
 
+** (model set-up 3) SET RACE / ETHNICITY VARIABLE
+** This particular parametrization fits: 
+**      African-American model if race = "black"
+**      White-American model if race = any other race/ethnicity  
+gen ascvd_race = .
+replace ascvd_race = 1 if ethnic==1
+replace ascvd_race = 2 if ethnic>1
+label define _race 1 "AA" 2 "WH", modify
+label values ascvd_race _race   
+
 ** Risk factor calculations - systolic blood pressure and diastolic blood presure
 gen ascvd_sbp = ( sbp2 + sbp3 ) / 2 
 label variable ascvd_sbp "Average Systolic blood pressure"
@@ -117,12 +127,15 @@ keep pid ed ascvd_*
 ** --------------------------------------------
 ** PART 2. Setting your CVD model inputs 
 ** --------------------------------------------
-tempvar risk risk10 optrisk female age sbp chol hdl smoke diab trhtn 
+tempvar risk risk10 optrisk female race age sbp chol hdl smoke diab trhtn 
 
 ** Model Terms
 
 ** Sex
 gen `female' = ascvd_sex
+
+** Race 
+gen `race' = ascvd_race 
 
 ** Age (y)
 gen `age' = ascvd_age
@@ -146,7 +159,7 @@ gen `diab' = ascvd_diab
 gen `trhtn' = ascvd_sbptreat 
 
 ** Keep Framingham variables only 
-keep pid ed `female' `age' `sbp' `chol' `hdl' `smoke' `diab' `trhtn' 
+keep pid ed ascvd_* `female' `race' `age' `sbp' `chol' `hdl' `smoke' `diab' `trhtn' 
 
 ** --------------------------------------------
 ** PART 3. Calculate Risk
@@ -154,15 +167,99 @@ keep pid ed `female' `age' `sbp' `chol' `hdl' `smoke' `diab' `trhtn'
 
 gen `risk' = . 
 #delimit ; 
+** AA-FEMALE-SBP NOT TREATED;
 replace `risk' =    ln(`age')*17.114 + ln(`sbp')*27.82 + ln(`chol')*0.940 + 
                     ln(`hdl')*-18.92 + 0.691 * `smoke' + 0.874 * `diab' +
                     ln(`age') * ln(`hdl') * 4.475 +
-                    ln(`age') * ln(`sbp') * -6.087 if `female' == 1 & `trhtn' == 0;
+                    ln(`age') * ln(`sbp') * -6.087 if `race'==1 & `female' == 1 & `trhtn' == 0;
 
+** AA-FEMALE-SBP TREATED;
 replace `risk' =    ln(`age')*17.114 + ln(`sbp')*29.291 + ln(`chol')*0.940 + 
                     ln(`hdl')*-18.92 + 0.691 * `smoke' + 0.874 * `diab' +
                     ln(`age') * ln(`hdl') * 4.475 +
-                    ln(`age') * ln(`sbp') * -6.432 if `female' == 1 & `trhtn' == 1;
+                    ln(`age') * ln(`sbp') * -6.432 if `race'==1 & `female' == 1 & `trhtn' == 1;
+
+** AA-MALE-SBP NOT TREATED;
+replace `risk' =    ln(`age')*2.469 + ln(`sbp')*1.809 + ln(`chol')*0.302 + 
+                    ln(`hdl')*-0.307 + 0.549 * `smoke' + 0.645 * `diab' if `race'==1 & `female' == 0 & `trhtn' == 0;
+
+** AA-MALE-SBP TREATED;
+replace `risk' =    ln(`age')*2.469 + ln(`sbp')*1.916 + ln(`chol')*0.302 + 
+                    ln(`hdl')*-0.307 + 0.549 * `smoke' + 0.645 * `diab' if `race'==1 & `female' == 0 & `trhtn' == 1;
 
 
+** WH-FEMALE-SBP NOT TREATED;
+replace `risk' =    ln(`age')*-29.799 + ln(`sbp')*1.957 + ln(`chol')*13.54 + 
+                    ln(`hdl')*-13.578 + 7.574 * `smoke' + 0.661 * `diab' +
+                    ln(`age') * ln(`age') * 4.884 +
+                    ln(`age') * ln(`chol') * -3.114 +
+                    ln(`age') * ln(`hdl') * 3.149 +
+                    ln(`age') * `smoke' * -1.665 if `race'==2 & `female' == 1 & `trhtn' == 0;
 
+** WH-FEMALE-SBP TREATED;
+replace `risk' =    ln(`age')*-29.799 + ln(`sbp')*2.019 + ln(`chol')*13.54 + 
+                    ln(`hdl')*-13.578 + 7.574 * `smoke' + 0.661 * `diab' +
+                    ln(`age') * ln(`age') * 4.884 +
+                    ln(`age') * ln(`chol') * -3.114 +
+                    ln(`age') * ln(`hdl') * 3.149 +
+                    ln(`age') * `smoke' * -1.665 if `race'==2 & `female' == 1 & `trhtn' == 1;
+
+** WH-MALE-SBP NOT TREATED;
+replace `risk' =    ln(`age')*12.344 + ln(`sbp')*1.764 + ln(`chol')*11.853 + 
+                    ln(`hdl')*-7.990 + 7.837 * `smoke' + 0.658 * `diab' +
+                    ln(`age') * ln(`chol') * -2.664 +
+                    ln(`age') * ln(`hdl') * 1.769 +
+                    ln(`age') * `smoke' * -1.795 if `race'==2 & `female' == 0 & `trhtn' == 0;
+
+** WH-MALE-SBP TREATED;
+replace `risk' =    ln(`age')*12.344 + ln(`sbp')*1.797 + ln(`chol')*11.853 + 
+                    ln(`hdl')*-7.990 + 7.837 * `smoke' + 0.658 * `diab' +
+                    ln(`age') * ln(`chol') * -2.664 +
+                    ln(`age') * ln(`hdl') * 1.769 +
+                    ln(`age') * `smoke' * -1.795 if `race'==2 & `female' == 0 & `trhtn' == 1;
+#delimit cr 
+
+** 10-year risk score
+gen risk10 = .
+replace risk10 = 1 - 0.8954 ^ exp(`risk' - 19.54) if `race'==1 & `female' == 0
+replace risk10 = 1 - 0.9533 ^ exp(`risk' - 86.61) if `race'==1 & `female' == 1
+replace risk10 = 1 - 0.9144 ^ exp(`risk' - 61.18) if `race'==2 & `female' == 0
+replace risk10 = 1 - 0.9665 ^ exp(`risk' + 29.18) if `race'==2 & `female' == 1
+
+label var risk10 "ASCVD: 10-year CVD risk"
+
+** Optimal 10-year CVD risk score 
+gen `optrisk' =.
+#delimit ;
+replace `optrisk' = ln(`age')*17.114 + ln(110)*27.82 + ln(170)*0.940 + 
+                    ln(50)*-18.92 + 0.691 * 0 + 0.874 * 0 +
+                    ln(`age') * ln(50) * 4.475 +
+                    ln(`age') * ln(110) * -6.087 if `race'==1 & `female' == 1 ;
+
+replace `optrisk' =    ln(`age')*2.469 + ln(110)*1.809 + ln(170)*0.302 + 
+                    ln(50)*-0.307 + 0.549 * 0 + 0.645 * 0 if `race'==1 & `female' == 0 ;
+
+replace `optrisk' =    ln(`age')*-29.799 + ln(110)*1.957 + ln(170)*13.54 + 
+                    ln(50)*-13.578 + 7.574 * 0 + 0.661 * 0 +
+                    ln(`age') * ln(`age') * 4.884 +
+                    ln(`age') * ln(170) * -3.114 +
+                    ln(`age') * ln(50) * 3.149 +
+                    ln(`age') * 0 * -1.665 if `race'==2 & `female' == 1 ;
+
+replace `optrisk' =    ln(`age')*12.344 + ln(110)*1.764 + ln(170)*11.853 + 
+                    ln(50)*-7.990 + 7.837 * 0 + 0.658 * 0 +
+                    ln(`age') * ln(170) * -2.664 +
+                    ln(`age') * ln(50) * 1.769 +
+                    ln(`age') * 0 * -1.795 if `race'==2 & `female' == 0 ;
+#delimit cr 
+** 10-year optimum risk score
+gen optrisk10 = .
+replace optrisk10 = 1 - 0.8954 ^ exp(`optrisk' - 19.54) if `race'==1 & `female' == 0
+replace optrisk10 = 1 - 0.9533 ^ exp(`optrisk' - 86.61) if `race'==1 & `female' == 1
+replace optrisk10 = 1 - 0.9144 ^ exp(`optrisk' - 61.18) if `race'==2 & `female' == 0
+replace optrisk10 = 1 - 0.9665 ^ exp(`optrisk' + 29.18) if `race'==2 & `female' == 1
+
+** Save the dataset for further work  
+label data "HotN data and ASCVD 10-year CVD risk score: Nov-2019" 
+local PATH_OUT ""`datapath'/version02/2-working/ascvd_cvdrisk""
+save `PATH_OUT', replace
