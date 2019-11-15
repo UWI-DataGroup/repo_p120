@@ -142,6 +142,23 @@ gen hdl_mg = hdl * 38.67
 ** Reference for conversion. NIH --> https://www.ncbi.nlm.nih.gov/books/NBK83505/
 gen tchol_mg = tchol * 38.67
 
+** Diabetes re-calculation to also include undiagnosed diabetes 
+** DIABETES - previously doctor diagnosed
+gen diabkn=.
+replace diabkn=1 if diab==1 & diabp!=1
+replace diabkn=2 if diabkn!=1 & diab!=.
+** DIABETES based on fasting plasma glucose
+recode fplas (1/6.9 =  0) (7.0/23 = 1), gen(diabfpg)
+lab var diabfpg "Diabetes based on fasting glucose"
+lab def _diab 0 "not diabetes" 1 "diabetes", modify
+** Diabetes - reported diagnosis plus newly diagnosed on fplas
+rename diab t1 
+gen diab =.
+replace diab = 1 if diabkn==1 | diabfpg==1
+replace diab = 0 if diabkn==2 & diabfpg==0
+lab val diab _diab
+lab var diab "Total diabetes - known plus fasting glucose"
+
 ** Keep only what is needed
 keep pid ed sex agey sbp sbptreat smoke diab hdl_mg tchol_mg
 
@@ -186,9 +203,8 @@ gen `smoke' = fram_smoke
 
 ** (model set-up 7) SET DIABETES STATUS (diabetic=1, non-diabetic=0)
 gen fram_diab = . 
-replace fram_diab = 0 if diab == 2
+replace fram_diab = 0 if diab == 0
 replace fram_diab = 1 if diab == 1
-label define _diab 0 "no" 1 "yes"
 label values fram_diab _diab
 label var fram_diab "Diabetic (no=0, yes=1)" 
 gen `diab' = fram_diab 
@@ -252,7 +268,6 @@ framingham , male(`male') age(`age') sbp(`sbp') trhtn(`trhtn') smoke(`smoke') di
                  hdl(`hdl') chol(`chol') optimal suffix(_ado)
 
 ** Save the dataset for further work 
-drop *_ado 
+drop *_ado _*
 label data "HotN data and Framingham 10-year CVD risk score: Nov-2019" 
-local PATH_OUT ""`datapath'/version02/2-working/framingham_cvdrisk""
-save `PATH_OUT', replace
+save "`datapath'/version02/2-working/framingham_cvdrisk", replace

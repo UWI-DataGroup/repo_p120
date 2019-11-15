@@ -261,5 +261,10 @@ replace optrisk10 = 1 - 0.9665 ^ exp(`optrisk' + 29.18) if `race'==2 & `female' 
 
 ** Save the dataset for further work  
 label data "HotN data and ASCVD 10-year CVD risk score: Nov-2019" 
-local PATH_OUT ""`datapath'/version02/2-working/ascvd_cvdrisk""
-save `PATH_OUT', replace
+save "`datapath'/version02/2-working/ascvd_cvdrisk", replace
+
+** Save reduced dataset for further work  (USED in ecs_analysis_hotn_004.DO)
+keep pid risk10 optrisk10 
+label data "HotN data and ASCVD 10-year CVD risk score: Nov-2019" 
+save "`datapath'/version02/2-working/ascvd_cvdrisk_reduced", replace
+

@@ -210,7 +210,7 @@ label values who_smoke _smk
 label var who_smoke "Gender (0=non-smoker, 1=smoker)"
 
 ** Keep only what is needed
-keep pid ed who_* cwho_*
+keep pid ed region wfinal1_ad wps_b2010 who_* cwho_*
 drop who_inactiverpaq
 
 ** CREATE HOTN UNIQUE IDENTIFIER FOR CVD RISK
@@ -235,6 +235,14 @@ drop AFR* EMR* EUR* SEAR* WPR* _merge
 
 ** Save the dataset for further work 
 label data "HotN data and WHO 10-year CVD risk score: Nov-2019" 
-local PATH_OUT ""`datapath'/version02/2-working/who_cvdrisk""
-save `PATH_OUT', replace
+save "`datapath'/version02/2-working/who_cvdrisk", replace
 
+
+** Save reduced dataset for further work  (USED in ecs_analysis_hotn_004.DO)
+** This dataset ONLY has participants - NO EMPTY WHO categories
+preserve
+    keep if pid<.
+    keep pid AMR_A AMR_B AMR_D
+    label data "HotN data and WHO 10-year CVD risk score: Nov-2019" 
+    save "`datapath'/version02/2-working/who_cvdrisk_sample", replace
+restore
