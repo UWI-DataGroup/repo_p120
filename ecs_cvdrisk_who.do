@@ -210,7 +210,7 @@ label values who_smoke _smk
 label var who_smoke "Gender (0=non-smoker, 1=smoker)"
 
 ** Keep only what is needed
-keep pid ed region wfinal1_ad wps_b2010 who_* cwho_*
+keep pid ed region wfinal1_ad wps_b2010 who_* cwho_* mi stroke angina
 drop who_inactiverpaq
 
 ** CREATE HOTN UNIQUE IDENTIFIER FOR CVD RISK

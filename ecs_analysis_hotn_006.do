@@ -1,4 +1,4 @@
-* HEADER -----------------------------------------------------
+** HEADER -----------------------------------------------------
 **  DO-FILE METADATA
     //  algorithm name					ecs_analysis_hotn_006.do
     //  project:				        Pediatric ECHORN (P-ECS)
@@ -247,6 +247,88 @@ egen yax = group(who_age who_sbp)
 ** Gen x-axis groups (sex smoker cholesterol)
 egen xax = group(who_sex_rev who_smoke who_tchol)
 
+** NO DIABETES - REFERENCE GRAPHIC
+preserve 
+#delimit ;
+
+gen yax3 = yax;
+gen xax3 = xax;
+
+replace yax3 = yax3+2 if yax3>=17 & yax3<=20;
+replace yax3 = yax3+1.5 if yax3>=13 & yax3<=16;
+replace yax3 = yax3+1 if yax3>=9 & yax3<=12;
+replace yax3 = yax3+0.5 if yax3>=5 & yax3<=8;
+replace xax3 = xax3+2 if xax3>=16 & xax3<=21;
+replace xax3 = xax3+1.5 if xax3>=11 & xax3<=15;
+replace xax3 = xax3+1 if xax3>=6 & xax3<=10;
+replace xax3 = xax3+0.5 if xax3>=1 & xax3<=5;
+
+	gr twoway 
+		/// NO DIABETES (LOWER WHO CHART)
+		  (sc yax3 xax3 if who_diab==0 & wr==1, m(S) msize(*2.3) mfc(green*0.65) mlc(gs0) mlw(vthin))
+		  (sc yax3 xax3 if who_diab==0 & wr==2, m(S) msize(*2.3) mfc(yellow) mlc(gs0) mlw(vthin))
+		  (sc yax3 xax3 if who_diab==0 & wr==3, m(S) msize(*2.3) mfc(orange) mlc(gs0) mlw(vthin))
+		  (sc yax3 xax3 if who_diab==0 & wr==4, m(S) msize(*2.3) mfc(red*0.65) mlc(gs0) mlw(vthin))
+		  (sc yax3 xax3 if who_diab==0 & wr==5, m(S) msize(*2.3) mfc(red*1.25) mlc(gs0) mlw(vthin))
+		  ,
+			plotregion(c(gs16) ic(gs16) ilw(thin) lw(thin)) 		
+			graphregion(color(gs16) ic(gs16) ilw(thin) lw(thin)) 
+			ysize(5)
+
+			/// SBP TEXT
+			text(1 23 "120", place(e) size(small)) text(2 23 "140", place(e) size(small))
+			text(3 23 "160", place(e) size(small)) text(4 23 "180", place(e) size(small))
+			text(5.5 23 "120", place(e) size(small)) text(6.5 23 "140", place(e) size(small))
+			text(7.5 23 "160", place(e) size(small)) text(8.5 23 "180", place(e) size(small))
+			text(10 23 "120", place(e) size(small)) text(11 23 "140", place(e) size(small))
+			text(12 23 "160", place(e) size(small)) text(13 23 "180", place(e) size(small))
+			text(14.5 23 "120", place(e) size(small)) text(15.5 23 "140", place(e) size(small))
+			text(16.5 23 "160", place(e) size(small)) text(17.5 23 "180", place(e) size(small))
+
+			/// AGE TEXT
+			text(2.5 -0.2 "40", place(e) size(small)) text(6.5 -0.2 "50", place(e) size(small))
+			text(10.5 -0.2 "60", place(e) size(small)) text(14.5 -0.2 "70", place(e) size(small))
+
+			/// CHOLESTEROL TEXT
+			text(-0.25 1.2 "4", place(e) size(small)) text(-0.25 2.2 "5", place(e) size(small))
+			text(-0.25 3.2 "6", place(e) size(small)) text(-0.25 4.2 "7", place(e) size(small)) text(-0.25 5.2 "8", place(e) size(small))
+
+			text(-0.25 6.8 "4", place(e) size(small)) text(-0.25 7.8 "5", place(e) size(small))
+			text(-0.25 8.8 "6", place(e) size(small)) text(-0.25 9.8 "7", place(e) size(small)) text(-0.25 10.8 "8", place(e) size(small))
+
+			text(-0.25 12.2 "4", place(e) size(small)) text(-0.25 13.2 "5", place(e) size(small))
+			text(-0.25 14.2 "6", place(e) size(small)) text(-0.25 15.2 "7", place(e) size(small)) text(-0.25 16.2 "8", place(e) size(small))
+
+			text(-0.25 17.8 "4", place(e) size(small)) text(-0.25 18.8 "5", place(e) size(small))
+			text(-0.25 19.8 "6", place(e) size(small)) text(-0.25 20.8 "7", place(e) size(small)) text(-0.25 21.8 "8", place(e) size(small))
+			
+			/// SBP title
+			text(9.5 25.5 "SBP (mm Hg)",  place(c) orient(rvertical) size(medsmall))
+			/// AGE title
+			text(9.5 -1 "Age (years)",  place(c) orient(vertical) size(medsmall))
+			/// CHOLESTEROL title
+			text(-1.5 11 "Cholesterol (mmol/L)", place(c) orient(horizontal) size(medsmall))
+			
+			/// SMOKER text
+			text(19 3.5 "Non-smoker", place(c) size(small))
+			text(19 9 "Smoker", place(c) size(small))
+			text(19 15 "Non-smoker", place(c) size(small))
+			text(19 20.5 "Smoker", place(c) size(small))
+			
+			/// SEX text
+			text(20.5 7 "Male", place(c) size(medsmall))
+			text(20.5 17 "Female", place(c) size(medsmall))
+			
+			xscale(off lw(vthin) range(-2(0.5)26)) 
+			yscale(off lw(vthin) range(-2(0.5)19)) 
+			legend(off) 
+            name(who_nodiabetes)
+			;
+#delimit cr
+graph export "`outputpath'/05_Outputs/who_cvd_ref_nodiab.png", replace height(550) 
+restore
+
+** NO DIABETES - ADDING HOTN SAMPLE TO REFERENCE GRAPHIC
 preserve
 gen wc1 = wc
 replace wc1 = . if pid==.
@@ -331,9 +413,10 @@ collapse (count) wc_count=wc1, by(wr yax xax who_diab who_sex_rev who_smoke who_
 			xscale(off lw(vthin) range(-2(0.5)26)) 
 			yscale(off lw(vthin) range(-2(0.5)19)) 
 			legend(off) 
-            name(who_nodiabetes)
+            name(who_nodiabetes_hotn)
             ;
     #delimit cr
+graph export "`outputpath'/05_Outputs/who_cvd_ref_nodiab_hotn.png", replace height(550) 
 restore
 
 
@@ -514,6 +597,89 @@ replace wr = 5 if wr==. & wc>320 & wc<=640;
 ** WITH DIABETES
 ** GRAPHIC to check coding accuracy of CVD risk groups: REFERENCE FIGURE 4
 ***************************************************************************************************
+
+** WITH DIABETES - REFERENCE FIGURE
+preserve 
+#delimit ;
+
+gen yax4 = yax;
+gen xax4 = xax;
+replace yax4 = yax4+2 if   yax4>=17 & yax4<=20;
+replace yax4 = yax4+1.5 if yax4>=13 & yax4<=16;
+replace yax4 = yax4+1 if   yax4>=9 &  yax4<=12;
+replace yax4 = yax4+0.5 if yax4>=5 &  yax4<=8;
+replace xax4 = xax4+2 if   xax4>=16 & xax4<=21;
+replace xax4 = xax4+1.5 if xax4>=11 & xax4<=15;
+replace xax4 = xax4+1 if   xax4>=6 &  xax4<=10;
+replace xax4 = xax4+0.5 if xax4>=1 &  xax4<=5;
+
+	gr twoway 
+		/// NO DIABETES (LOWER WHO CHART)
+		  (sc yax4 xax4 if who_diab==1 & wr==1, m(S) msize(*2.3) mfc(green*0.65) mlc(gs0) mlw(vthin))
+		  (sc yax4 xax4 if who_diab==1 & wr==2, m(S) msize(*2.3) mfc(yellow) mlc(gs0) mlw(vthin))
+		  (sc yax4 xax4 if who_diab==1 & wr==3, m(S) msize(*2.3) mfc(orange) mlc(gs0) mlw(vthin))
+		  (sc yax4 xax4 if who_diab==1 & wr==4, m(S) msize(*2.3) mfc(red*0.65) mlc(gs0) mlw(vthin))
+		  (sc yax4 xax4 if who_diab==1 & wr==5, m(S) msize(*2.3) mfc(red*1.25) mlc(gs0) mlw(vthin))
+		  ,
+			plotregion(c(gs16) ic(gs16) ilw(thin) lw(thin)) 		
+			graphregion(color(gs16) ic(gs16) ilw(thin) lw(thin)) 
+			ysize(5)
+
+			/// SBP TEXT
+			text(1 23 "120", place(e) size(small)) text(2 23 "140", place(e) size(small))
+			text(3 23 "160", place(e) size(small)) text(4 23 "180", place(e) size(small))
+			text(5.5 23 "120", place(e) size(small)) text(6.5 23 "140", place(e) size(small))
+			text(7.5 23 "160", place(e) size(small)) text(8.5 23 "180", place(e) size(small))
+			text(10 23 "120", place(e) size(small)) text(11 23 "140", place(e) size(small))
+			text(12 23 "160", place(e) size(small)) text(13 23 "180", place(e) size(small))
+			text(14.5 23 "120", place(e) size(small)) text(15.5 23 "140", place(e) size(small))
+			text(16.5 23 "160", place(e) size(small)) text(17.5 23 "180", place(e) size(small))
+
+			/// AGE TEXT
+			text(2.5 -0.2 "40", place(e) size(small)) text(6.5 -0.2 "50", place(e) size(small))
+			text(10.5 -0.2 "60", place(e) size(small)) text(14.5 -0.2 "70", place(e) size(small))
+
+			/// CHOLESTEROL TEXT
+			text(-0.25 1.2 "4", place(e) size(small)) text(-0.25 2.2 "5", place(e) size(small))
+			text(-0.25 3.2 "6", place(e) size(small)) text(-0.25 4.2 "7", place(e) size(small)) text(-0.25 5.2 "8", place(e) size(small))
+
+			text(-0.25 6.8 "4", place(e) size(small)) text(-0.25 7.8 "5", place(e) size(small))
+			text(-0.25 8.8 "6", place(e) size(small)) text(-0.25 9.8 "7", place(e) size(small)) text(-0.25 10.8 "8", place(e) size(small))
+
+			text(-0.25 12.2 "4", place(e) size(small)) text(-0.25 13.2 "5", place(e) size(small))
+			text(-0.25 14.2 "6", place(e) size(small)) text(-0.25 15.2 "7", place(e) size(small)) text(-0.25 16.2 "8", place(e) size(small))
+
+			text(-0.25 17.8 "4", place(e) size(small)) text(-0.25 18.8 "5", place(e) size(small))
+			text(-0.25 19.8 "6", place(e) size(small)) text(-0.25 20.8 "7", place(e) size(small)) text(-0.25 21.8 "8", place(e) size(small))
+			
+			/// SBP title
+			text(9.5 25.5 "SBP (mm Hg)",  place(c) orient(rvertical) size(medsmall))
+			/// AGE title
+			text(9.5 -1 "Age (years)",  place(c) orient(vertical) size(medsmall))
+			/// CHOLESTEROL title
+			text(-1.5 11 "Cholesterol (mmol/L)", place(c) orient(horizontal) size(medsmall))
+			
+			/// SMOKER text
+			text(19 3.5 "Non-smoker", place(c) size(small))
+			text(19 9 "Smoker", place(c) size(small))
+			text(19 15 "Non-smoker", place(c) size(small))
+			text(19 20.5 "Smoker", place(c) size(small))
+			
+			/// SEX text
+			text(20.5 7 "Male", place(c) size(medsmall))
+			text(20.5 17 "Female", place(c) size(medsmall))
+			
+			xscale(off lw(vthin) range(-2(0.5)26)) 
+			yscale(off lw(vthin) range(-2(0.5)19)) 
+			legend(off) 
+			name(who_diabetes) 
+			;
+#delimit cr
+graph export "`outputpath'/05_Outputs/who_cvd_ref_diab.png", replace height(550) 
+restore
+
+
+** WITH DIABETES - ADDING HOTN TO REFERENCE FIGURE
 preserve
 gen wc1 = wc
 replace wc1 = . if pid==.
@@ -598,13 +764,14 @@ replace xax4 = xax4+0.5 if xax4>=1 &  xax4<=5;
 			xscale(off lw(vthin) range(-2(0.5)26)) 
 			yscale(off lw(vthin) range(-2(0.5)19)) 
 			legend(off) 
-			name(who_diabetes) 
+			name(who_diabetes_hotn) 
             ;
 #delimit cr
+graph export "`outputpath'/05_Outputs/who_cvd_ref_diab_hotn.png", replace height(550) 
 restore
 
 
-/*
+
 
 ***************************************************************************************************
 ** 005.	WHO 10-YEAR CVD RISK in the HOTN SURVEY
@@ -619,7 +786,7 @@ drop if pcount==0
 svyset ed [pweight=wfinal1_ad], strata(region) 
 
 ** Age in 3-age groups (NU paper draft)
-gen age3g = recode(agey,45,65,110)
+gen age3g = recode(cwho_age,45,65,110)
 recode age3g 45=1 65=2 110=3
 label define age3g 1 "25-44" 2 "45-64" 3 "65+"
 label values age3g age3g
@@ -636,20 +803,21 @@ replace wr3 = 0 if wr==1 | wr==2
 replace wr3 = 1 if wr==3 | wr==4 | wr==5
 
 ** Tabulate 10-YEAR risk by age: 10% or greater risk of CVD
-tab wr2 dm_y1_n0
+tab wr2 who_diab
 ** females
-svy: tab age3g wr2 if sex==0, row perc ci
+svy: tab age3g wr2 if who_sex==0, row perc ci
 ** males
-svy: tab age3g wr2 if sex==1, row perc ci
+svy: tab age3g wr2 if who_sex==1, row perc ci
 ** all
 svy: tab age3g wr2 , row perc ci
 
+
 ** Tabulate 10-YEAR risk by age: 20% or greater risk of CVD
-tab wr3 dm_y1_n0
+tab wr3 who_diab
 ** females
-svy: tab age3g wr3 if sex==0, row perc ci
+svy: tab age3g wr3 if who_sex==0, row perc ci
 ** males
-svy: tab age3g wr3 if sex==1, row perc ci
+svy: tab age3g wr3 if who_sex==1, row perc ci
 ** all
 svy: tab age3g wr3 , row perc ci
 
@@ -669,20 +837,20 @@ replace wr3_adj = 0 if wr_adj==1 | wr_adj==2
 replace wr3_adj = 1 if wr_adj==3 | wr_adj==4 | wr_adj==5
 
 ** Tabulate 10-YEAR risk by age: 10% or greater risk of CVD
-tab wr2_adj dm_y1_n0
+tab wr2_adj who_diab
 ** females
-svy: tab age3g wr2_adj if sex==0, row perc ci
+svy: tab age3g wr2_adj if who_sex==0, row perc ci
 ** males
-svy: tab age3g wr2_adj if sex==1, row perc ci
+svy: tab age3g wr2_adj if who_sex==1, row perc ci
 ** all
 svy: tab age3g wr2_adj , row perc ci
 
 ** Tabulate 10-YEAR risk by age: 20% or greater risk of CVD
-tab wr3_adj dm_y1_n0
+tab wr3_adj who_diab
 ** females
-svy: tab age3g wr3_adj if sex==0, row perc ci
+svy: tab age3g wr3_adj if who_sex==0, row perc ci
 ** males
-svy: tab age3g wr3_adj if sex==1, row perc ci
+svy: tab age3g wr3_adj if who_sex==1, row perc ci
 ** all
 svy: tab age3g wr3_adj , row perc ci
 
@@ -696,11 +864,11 @@ svy: tab age3g wr3_adj , row perc ci
 qui{
 preserve
 	tempfile svy1
-	xcontract sex age3g wr3, zero saving(`svy1', replace)
+	xcontract who_sex age3g wr3, zero saving(`svy1', replace)
 	**use `svy1', clear
 	svyset ed [pweight=wfinal1_ad], strata(region) 
 	svy: tab age3g wr3 , row percent ci
-	parmby "svy: tab age3g wr3 , row percent ci", by(sex) norestore
+	parmby "svy: tab age3g wr3 , row percent ci", by(who_sex) norestore
 	replace stderr=stderr/(estimate*(1-estimate))
 	replace estimate=log(estimate/(1-estimate))
 	drop t p min* max*
@@ -709,8 +877,8 @@ preserve
 	gen min95_2=exp(min95)/(1+exp(min95))
 	gen max95_2=exp(max95)/(1+exp(max95))
 	merge using `svy1'
-	sort wr3 sex age3g
-	list wr3 sex age3g _freq estimate_2 min95_2 max95_2, sepby(sex)
+	sort wr3 who_sex age3g
+	list wr3 who_sex age3g _freq estimate_2 min95_2 max95_2, sepby(who_sex)
 	tempfile wr3_results_correct_CIs
 	save `wr3_results_correct_CIs', replace
 restore
@@ -720,11 +888,11 @@ restore
 qui {
 preserve
 	tempfile svy1
-	xcontract sex age3g wr, zero saving(`svy1', replace)
+	xcontract who_sex age3g wr, zero saving(`svy1', replace)
 	**use `svy1', clear
 	svyset ed [pweight=wfinal1_ad], strata(region) 
 	svy: tab age3g wr , row percent ci
-	parmby "svy: tab age3g wr , row percent ci", by(sex) norestore
+	parmby "svy: tab age3g wr , row percent ci", by(who_sex) norestore
 	replace stderr=stderr/(estimate*(1-estimate))
 	replace estimate=log(estimate/(1-estimate))
 	drop t p min* max*
@@ -733,8 +901,8 @@ preserve
 	gen min95_2=exp(min95)/(1+exp(min95))
 	gen max95_2=exp(max95)/(1+exp(max95))
 	merge using `svy1'
-	sort wr sex age3g
-	list wr sex age3g _freq estimate_2 min95_2 max95_2, sepby(sex)
+	sort wr who_sex age3g
+	list wr who_sex age3g _freq estimate_2 min95_2 max95_2, sepby(who_sex)
 	tempfile wr_results_correct_CIs
 	save `wr_results_correct_CIs', replace
 restore
@@ -761,7 +929,7 @@ preserve
 		ysize(3)
 
 		over(age3g, gap(5)) 
-		over(sex, gap(40))
+		over(who_sex, gap(40))
 		blabel(none, format(%9.0f) pos(outside) size(medsmall))
 		/// WR==1
 		bar(1, bc(green*0.65) blw(vthin) blc(gs0))
@@ -784,8 +952,11 @@ preserve
 		lab(3 "20 to <30%")
 		lab(4 "30 to <40%")
 		lab(5 ">=40%")
-		);
+		)
+		name(who_cvdrisk_unadjusted) 
+		;
 	#delimit cr	
+graph export "`outputpath'/05_Outputs/who_cvd_stacked.png", replace height(400) 
 restore	
 
 
@@ -799,11 +970,11 @@ restore
 qui{
 preserve
 	tempfile svy1
-	xcontract sex age3g wr3_adj, zero saving(`svy1', replace)
+	xcontract who_sex age3g wr3_adj, zero saving(`svy1', replace)
 	**use `svy1', clear
 	svyset ed [pweight=wfinal1_ad], strata(region) 
 	svy: tab age3g wr3_adj , row percent ci
-	parmby "svy: tab age3g wr3_adj , row percent ci", by(sex) norestore
+	parmby "svy: tab age3g wr3_adj , row percent ci", by(who_sex) norestore
 	replace stderr=stderr/(estimate*(1-estimate))
 	replace estimate=log(estimate/(1-estimate))
 	drop t p min* max*
@@ -812,8 +983,8 @@ preserve
 	gen min95_2=exp(min95)/(1+exp(min95))
 	gen max95_2=exp(max95)/(1+exp(max95))
 	merge using `svy1'
-	sort wr3_adj sex age3g
-	list wr3_adj sex age3g _freq estimate_2 min95_2 max95_2, sepby(sex)
+	sort wr3_adj who_sex age3g
+	list wr3_adj who_sex age3g _freq estimate_2 min95_2 max95_2, sepby(who_sex)
 	tempfile wr3_adj_results_correct_CIs
 	save `wr3_adj_results_correct_CIs', replace
 restore
@@ -823,11 +994,11 @@ restore
 qui {
 preserve
 	tempfile svy1
-	xcontract sex age3g wr_adj, zero saving(`svy1', replace)
+	xcontract who_sex age3g wr_adj, zero saving(`svy1', replace)
 	**use `svy1', clear
 	svyset ed [pweight=wfinal1_ad], strata(region) 
 	svy: tab age3g wr_adj , row percent ci
-	parmby "svy: tab age3g wr_adj , row percent ci", by(sex) norestore
+	parmby "svy: tab age3g wr_adj , row percent ci", by(who_sex) norestore
 	replace stderr=stderr/(estimate*(1-estimate))
 	replace estimate=log(estimate/(1-estimate))
 	drop t p min* max*
@@ -836,8 +1007,8 @@ preserve
 	gen min95_2=exp(min95)/(1+exp(min95))
 	gen max95_2=exp(max95)/(1+exp(max95))
 	merge using `svy1'
-	sort wr_adj sex age3g
-	list wr_adj sex age3g _freq estimate_2 min95_2 max95_2, sepby(sex)
+	sort wr_adj who_sex age3g
+	list wr_adj who_sex age3g _freq estimate_2 min95_2 max95_2, sepby(who_sex)
 	tempfile wr_adj_results_correct_CIs
 	save `wr_adj_results_correct_CIs', replace
 restore
@@ -864,7 +1035,7 @@ preserve
 		ysize(3)
 
 		over(age3g, gap(5)) 
-		over(sex, gap(40))
+		over(who_sex, gap(40))
 		blabel(none, format(%9.0f) pos(outside) size(medsmall))
 		/// WR==1
 		bar(1, bc(green*0.65) blw(vthin) blc(gs0))
@@ -887,7 +1058,10 @@ preserve
 		lab(3 "20 to <30%")
 		lab(4 "30 to <40%")
 		lab(5 ">=40%")
-		);
+		)
+		name(who_cvdrisk_adjusted) 
+		;
 	#delimit cr	
+graph export "`outputpath'/05_Outputs/who_cvd_stacked_adj.png", replace height(400) 
 restore	
 

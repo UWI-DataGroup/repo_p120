@@ -68,11 +68,11 @@ replace risk10 = risk10 * 100
 mata
     b=xl() 
     b.load_book("`outputpath'/05_Outputs/cvdrisk_example_Barbados.xlsx")
-    b.set_sheet("Part2")
-    b.delete_sheet("Part2")
+    b.set_sheet("Part2-Inequality")
+    b.delete_sheet("Part2-Inequality")
     b.close_book()
 end 
-putexcel set "`outputpath'/05_Outputs/cvdrisk_example_Barbados", modify sheet(Part2)
+putexcel set "`outputpath'/05_Outputs/cvdrisk_example_Barbados", modify sheet(Part2-Inequality)
 
 ** -------------------------------------------------------------------------------------------------------------------- 
 *! Create Overall title and Column titles
@@ -104,13 +104,13 @@ putexcel C15 = "Mean Absolute Deviation (MD)", bold font("Calibri", 10) vcenter
 putexcel C16 = "Relative Ratio (RR)", bold font("Calibri", 10) vcenter  
 putexcel C17 = "Index of Disparity (ID)", bold font("Calibri", 10) vcenter  
 ** Images
-putexcel A20 = "Figure 2-1. CVD risk score by Place of Residence", font("Calibri", 14) vcenter  
-putexcel B21 = "A. By ED. Women and Men combined", font("Calibri", 12) vcenter  
-putexcel D21 = "B. By ED. Women only", font("Calibri", 12) vcenter  
-putexcel G21 = "C. By ED. Men only", font("Calibri", 12) vcenter  
-putexcel B46 = "D. By Parish. Women and Men combined", font("Calibri", 12) vcenter  
-putexcel D46 = "E. By Parish. Women only", font("Calibri", 12) vcenter  
-putexcel G46 = "F. By Parish. Men only", font("Calibri", 12) vcenter  
+putexcel A28 = "Figure 2-1. CVD risk score by Place of Residence", font("Calibri", 14) vcenter  
+putexcel B29 = "A. By ED. Women and Men combined", font("Calibri", 12) vcenter bold  
+putexcel D29 = "B. By ED. Women only", font("Calibri", 12) vcenter bold  
+putexcel G29 = "C. By ED. Men only", font("Calibri", 12) vcenter bold  
+putexcel B54 = "D. By Parish. Women and Men combined", font("Calibri", 12) vcenter bold  
+putexcel D54 = "E. By Parish. Women only", font("Calibri", 12) vcenter bold  
+putexcel G54 = "F. By Parish. Men only", font("Calibri", 12) vcenter bold  
 ** -------------------------------------------------------------------------------------------------------------------- 
 *! Inequality metrics by ED
 *! SIMPLE MEASURES: ABSOLUTE DIFFERENCE (D) and RELATIVE RATIO (RR)
@@ -210,6 +210,8 @@ putexcel (B10:E10), border(top)
 putexcel (B14:E14), border(top)
 putexcel (B17:E17), border(bottom, medium)
 putexcel (B5:E5), fpattern(solid, "220 220 220")
+putexcel (B19:I19), fpattern(solid, "220 220 220")
+putexcel (B26:I26), fpattern(solid, "198 219 239")
 
 ** -------------------------------------------------------------------------------------------------------------------- 
 *! Write footnotes
@@ -222,16 +224,22 @@ putexcel (B5:E5), fpattern(solid, "220 220 220")
 mata 
     b = xl() 
     b.load_book("`outputpath'/05_Outputs/cvdrisk_example_Barbados.xlsx")
-    b.set_sheet("Part2")
-    b.set_sheet_gridlines("Part2", "off")
+    b.set_sheet("Part2-Inequality")
+    b.set_sheet_gridlines("Part2-Inequality", "off")
     b.set_column_width(2,2,20)  //make row-title column widest
     b.set_column_width(3,3,25)  //make row-title column widest
     b.set_column_width(4,4,15)  //make ED column widest
     b.set_column_width(5,5,15)  //make ED column widest
     b.set_row_height(1,1,35)    //make title row bigger
     b.set_row_height(5,5,50)    //make Header row bigger
-    b.set_row_height(19,19,70)  //make footnote text fully show
-    b.set_row_height(20,20,30)    //make title row bigger
+    b.set_row_height(19,19,30)  //Interpretation title
+    b.set_row_height(20,20,80)  //interpretation
+    b.set_row_height(21,21,50)  //interpretation
+    b.set_row_height(22,22,50)  //interpretation
+    b.set_row_height(23,23,50)  //interpretation
+    b.set_row_height(24,24,50)  //interpretation
+    b.set_row_height(25,25,50)  //interpretation
+    b.set_row_height(26,26,50)  //interpretation
     b.close_book()
 end
 
@@ -281,7 +289,7 @@ label values ed _ed
         ;
 #delimit cr	
 graph export "`outputpath'/05_Outputs/fram_orderedbar_all.png", replace width(250)
-putexcel B23 = image("`outputpath'/05_Outputs/fram_orderedbar_all.png")
+putexcel B31 = image("`outputpath'/05_Outputs/fram_orderedbar_all.png")
 
 
 
@@ -308,7 +316,7 @@ putexcel B23 = image("`outputpath'/05_Outputs/fram_orderedbar_all.png")
         ;
 #delimit cr	
 graph export "`outputpath'/05_Outputs/fram_orderedbar_women.png", replace width(250)
-putexcel D23 = image("`outputpath'/05_Outputs/fram_orderedbar_women.png")
+putexcel D31 = image("`outputpath'/05_Outputs/fram_orderedbar_women.png")
 
 ** MEN only 
 #delimit ;
@@ -333,7 +341,7 @@ putexcel D23 = image("`outputpath'/05_Outputs/fram_orderedbar_women.png")
         ;
 #delimit cr	
 graph export "`outputpath'/05_Outputs/fram_orderedbar_men.png", replace width(250)
-putexcel G23 = image("`outputpath'/05_Outputs/fram_orderedbar_men.png")
+putexcel G31 = image("`outputpath'/05_Outputs/fram_orderedbar_men.png")
 
 
 ** BY PARISH
@@ -361,7 +369,7 @@ putexcel G23 = image("`outputpath'/05_Outputs/fram_orderedbar_men.png")
         ;
 #delimit cr	
 graph export "`outputpath'/05_Outputs/fram_orderedbar_all_parish.png", replace width(250)
-putexcel B48 = image("`outputpath'/05_Outputs/fram_orderedbar_all_parish.png")
+putexcel B56 = image("`outputpath'/05_Outputs/fram_orderedbar_all_parish.png")
 
 
 
@@ -388,7 +396,7 @@ putexcel B48 = image("`outputpath'/05_Outputs/fram_orderedbar_all_parish.png")
         ;
 #delimit cr	
 graph export "`outputpath'/05_Outputs/fram_orderedbar_women_parish.png", replace width(250)
-putexcel D48 = image("`outputpath'/05_Outputs/fram_orderedbar_women_parish.png")
+putexcel D56 = image("`outputpath'/05_Outputs/fram_orderedbar_women_parish.png")
 
 ** MEN only 
 #delimit ;
@@ -413,15 +421,55 @@ putexcel D48 = image("`outputpath'/05_Outputs/fram_orderedbar_women_parish.png")
         ;
 #delimit cr	
 graph export "`outputpath'/05_Outputs/fram_orderedbar_men_parish.png", replace width(250)
-putexcel G48 = image("`outputpath'/05_Outputs/fram_orderedbar_men_parish.png")
+putexcel G56 = image("`outputpath'/05_Outputs/fram_orderedbar_men_parish.png")
+
 
 ** -------------------------------------------------------------------------------------------------------------------- 
 *! Interpretation
 ** -------------------------------------------------------------------------------------------------------------------- 
-putexcel G5 = "Interpretation", font("Calibri", 12) bold vcenter  
-putexcel (G6:P17) = "hello hello hello" , font("Calibri", 11) merge vcenter
-putexcel (G5:P5), border(top, medium)
-putexcel (G5:P5), border(bottom, medium)
-putexcel (G17:P17), border(bottom, medium)
-putexcel (G5:G17), border(left, medium)
-putexcel (P5:P17), border(right, medium) 
+putexcel B19 = "Interpretation", font("Calibri", 12) bold vcenter  
+
+** Results Box 1 
+local text1 = "The distribution of 10-year CVD risk across the sampled Enumeration Districts (EDs) in Barbados was shifted higher among men compared to women. This generally higher CVD risk among men was accompanied by a 2-fold higher absolute inequality between EDs (whether using absolute difference or mean absolute deviation). The relative inequality between EDs, though, was roughly the same for women and men."
+local text2 = uchar(5171) + "  " + "`text1'"
+putexcel (B20:I20) = "`text2'" , font("Calibri", 11) merge vcenter txtwrap
+
+** Results Box 2 
+local text1 = "Among women and men combined, the 10-year CVD risk across the sampled EDs in Barbados ranged from 9.3% to 25.3%, an absolute difference of 16 percentage points, and a relative difference of 2.7."
+local text2 = uchar(5171) + "  " + "`text1'"
+putexcel (B21:I21) = "`text2'" , font("Calibri", 11) merge vcenter txtwrap
+
+** Results Box 3 
+local text1 = "Among women, the 10-year CVD risk ranged from 4.6% to 19.8%, an absolute difference of 15.2 percentage points, and a relative difference of 4.3."
+local text2 = uchar(5171) + "  " + "`text1'"
+putexcel (B22:I22) = "`text2'" , font("Calibri", 11) merge vcenter txtwrap
+
+** Results Box 4
+local text1 = "Among men, the 10-year CVD risk ranged from 10.3% to 43.5%, an absolute difference of 33.2 percentage points, and a relative difference of 4.2."
+local text2 = uchar(5171) + "  " + "`text1'"
+putexcel (B23:I23) = "`text2'" , font("Calibri", 11) merge vcenter txtwrap
+
+** Results Box 5
+local text1 = "The ordered bar charts for CVD risk by ED (Figure 2-1, A-C) visualize the risk inequality, with the 'slope' of ordered bars providing an informal indication of inequality size. This slope is formally measured using the mean absolute deviation, which confirms the doubled absolute inequality between EDs for men, compared to women. "
+local text2 = uchar(5171) + "  " + "`text1'"
+putexcel (B24:I24) = "`text2'" , font("Calibri", 11) merge vcenter txtwrap
+
+** Results Box 6
+local text1 = "The ordered bar charts for CVD risk by parish (Figure 2-1, D-F), tell a similar story to that seem among EDs, with a higher absolute inequality and similar relative inequality."
+local text2 = uchar(5171) + "  " + "`text1'"
+putexcel (B25:I25) = "`text2'" , font("Calibri", 11) merge vcenter txtwrap
+
+** Results Box 7
+local text1a = "apply complex inequality measures for ordered stratifiers (Slope Index of inequality-SII and Relative Index of Inequality-RII)"
+local text1b = "For ECHORN, compare across country"
+local text1c = "ED-level information for Trinidad. Probably island-level information for USVI. Stratification for Puerto Rico?"
+local text1d = "For Barbados, consider joining HotN + ECHORN baseline"
+local text2 = "Potential Additional Work:   " + ustrunescape("\u25cf") + " `text1a'   " + ustrunescape("\u25cf") + "  `text1b'  " + ustrunescape("\u25cf") + " `text1c' " + ustrunescape("\u25cf") + " `text1d'   "
+putexcel (B26:I26) = "`text2'" , font("Calibri", 11) merge vcenter txtwrap italic bold
+
+putexcel (B19:I19), border(top, medium)
+putexcel (B19:I19), border(bottom) 
+putexcel (B25:I25), border(bottom, medium)
+putexcel (B26:I26), border(bottom, medium)
+putexcel (B19:B26), border(left, medium)
+putexcel (I19:I26), border(right, medium) 

@@ -4,7 +4,7 @@
     //  project:				        Pediatric ECHORN (P-ECS)
     //  analysts:				       	Ian HAMBLETON
     // 	date last modified	            05-NOV-2019
-    //  algorithm task			        implamenting the Framingham CVD risk score.
+    //  algorithm task			        Part 3. Mapping Framingham CVD Risk Score using HotN sample.
 
     ** General algorithm set-up
     version 16
@@ -253,11 +253,11 @@ graph export "`outputpath'/05_Outputs/fram_cvdmap_barbados_pam.png", replace hei
 mata
     b=xl() 
     b.load_book("`outputpath'/05_Outputs/cvdrisk_example_Barbados.xlsx")
-    b.set_sheet("Part3")
-    b.delete_sheet("Part3")
+    b.set_sheet("Part3-Mapping")
+    b.delete_sheet("Part3-Mapping")
     b.close_book()
 end 
-putexcel set "`outputpath'/05_Outputs/cvdrisk_example_Barbados", modify sheet(Part3)
+putexcel set "`outputpath'/05_Outputs/cvdrisk_example_Barbados", modify sheet(Part3-Mapping)
 
 ** -------------------------------------------------------------------------------------------------------------------- 
 *! Create Overall title and Column titles
@@ -265,22 +265,22 @@ putexcel set "`outputpath'/05_Outputs/cvdrisk_example_Barbados", modify sheet(Pa
 putexcel A1 = "Figure 3-1. CVD risk score for women and men by place of residence (Enumeration District, Parish)", font("Calibri", 14) vcenter
 putexcel A2 = "Algorithms Created by:" C2 = "Ian Hambleton", font("Calibri", 12) vcenter
 putexcel A3 = "Results last updated:" C3 = "`c(current_date)'", font("Calibri", 12) vcenter
-putexcel B15 = "A. By ED. Women and Men combined", font("Calibri", 12) vcenter  
-putexcel J15 = "B. By ED. Women only", font("Calibri", 12) vcenter  
-putexcel R15 = "C. By ED. Men only", font("Calibri", 12) vcenter  
-putexcel B48 = "D. By Parish. Women and Men combined", font("Calibri", 12) vcenter  
-putexcel J48 = "E. By Parish. Women only", font("Calibri", 12) vcenter  
-putexcel R48 = "F. By Parish. Men only", font("Calibri", 12) vcenter  
+putexcel B14 = "A. By ED. Women and Men combined", font("Calibri", 12) vcenter bold  
+putexcel J14 = "B. By ED. Women only", font("Calibri", 12) vcenter bold  
+putexcel R14 = "C. By ED. Men only", font("Calibri", 12) vcenter bold  
+putexcel B47 = "D. By Parish. Women and Men combined", font("Calibri", 12) vcenter bold  
+putexcel J47 = "E. By Parish. Women only", font("Calibri", 12) vcenter bold  
+putexcel R47 = "F. By Parish. Men only", font("Calibri", 12) vcenter bold  
 
 ** -------------------------------------------------------------------------------------------------------------------- 
 *! Place the ED-level map
 ** -------------------------------------------------------------------------------------------------------------------- 
-putexcel B18 = image("`outputpath'/05_Outputs/fram_cvdmap_barbados_ed.png")
-putexcel J18 = image("`outputpath'/05_Outputs/fram_cvdmap_barbados_edw.png")
-putexcel R18 = image("`outputpath'/05_Outputs/fram_cvdmap_barbados_edm.png")
-putexcel B51 = image("`outputpath'/05_Outputs/fram_cvdmap_barbados_pa.png")
-putexcel J51 = image("`outputpath'/05_Outputs/fram_cvdmap_barbados_paw.png")
-putexcel R51 = image("`outputpath'/05_Outputs/fram_cvdmap_barbados_pam.png")
+putexcel B17 = image("`outputpath'/05_Outputs/fram_cvdmap_barbados_ed.png")
+putexcel J17 = image("`outputpath'/05_Outputs/fram_cvdmap_barbados_edw.png")
+putexcel R17 = image("`outputpath'/05_Outputs/fram_cvdmap_barbados_edm.png")
+putexcel B50 = image("`outputpath'/05_Outputs/fram_cvdmap_barbados_pa.png")
+putexcel J50 = image("`outputpath'/05_Outputs/fram_cvdmap_barbados_paw.png")
+putexcel R50 = image("`outputpath'/05_Outputs/fram_cvdmap_barbados_pam.png")
 
 ** -------------------------------------------------------------------------------------------------------------------- 
 *! Format Excel cells
@@ -288,22 +288,65 @@ putexcel R51 = image("`outputpath'/05_Outputs/fram_cvdmap_barbados_pam.png")
 mata 
     b = xl() 
     b.load_book("`outputpath'/05_Outputs/cvdrisk_example_Barbados.xlsx")
-    b.set_sheet("Part3")
-    b.set_sheet_gridlines("Part3", "off")
+    b.set_sheet("Part3-Mapping")
+    b.set_sheet_gridlines("Part3-Mapping", "off")
     b.set_column_width(1,1,25)  //make row-title column widest
     b.set_row_height(1,1,30)    //make title row bigger
     b.set_row_height(5,5,30)    //make Interpretation title row bigger
+    b.set_row_height(6,6,80)  //interpretation
+    b.set_row_height(7,7,30)  //interpretation
+    b.set_row_height(8,8,70)  //interpretation
+    b.set_row_height(9,9,70)  //interpretation
+    b.set_row_height(10,10,70)  //interpretation
+    b.set_row_height(11,11,50)  //interpretation    
     b.close_book()
 end
 
 ** -------------------------------------------------------------------------------------------------------------------- 
 *! Interpretation
 ** -------------------------------------------------------------------------------------------------------------------- 
+
 putexcel B5 = "Interpretation", font("Calibri", 12) bold vcenter  
-putexcel (B6:S12) = "hello hello hello" , font("Calibri", 11) merge vcenter
+
+** Results Box 1 
+local text1 = "Using Barbados for this example analysis, choropleth maps of 10-year CVD risk by ED are presented in Figures A-C, and by parish are presented in Figures D-F."
+local text2 = uchar(5171) + "  " + "`text1'"
+putexcel (B6:S6) = "`text2'" , font("Calibri", 11) merge vcenter txtwrap
+
+** Results Box 2 
+local text1 = "Initially, we note the small number of EDs represented in the Health of the Nation risk factor survey (45 EDs out of a total 583 EDs). This limits our ability to conduct a traditional 'hot-spot' analysis, for which we would rely on the availability of risk information from contiguous neighborhoods. Alternative techniques are available to us, including using 'place' in CVD risk rankings - eg. see Part 2 of this analysis."
+local text2 = uchar(5171) + "  " + "`text1'"
+putexcel (B7:S7) = "`text2'" , font("Calibri", 11) merge vcenter txtwrap
+
+** Results Box 3 
+local text1 = "Looking at the ED-level maps for women and for men, we note again the higher CVD risk distribution apparent among men, compared to women. Anecdotally, we wonder about a 'coastal ring' of high CVD risk EDs for men around Barbados, which includes the Bridgetown 'conurbation' of St.Michael and Christ Church. This somewhat arguable visual impression would need formal exploration."
+local text2 = uchar(5171) + "  " + "`text1'"
+putexcel (B8:S8) = "`text2'" , font("Calibri", 11) merge vcenter txtwrap
+
+** Results Box 4
+local text1 = "Provide additional information on the sampled participants, by ED - as context for these ED-level CVD risk scores."
+local text2 = uchar(5171) + "  " + "`text1'"
+putexcel (B9:S9) = "`text2'" , font("Calibri", 11) merge vcenter txtwrap
+
+** Results Box 5
+local text1 = "It is important to interpret GIS information in the context of local neighborhood knowledge. It will be important, and hopefully insightful, to provide summaries / characteristics of the sampled EDs, for context. These characteristics could feed into an 'ecological regression' noted as additional work below. ED-level information is collected at each census, is not openly available in much of the caribbean, but data access is perhaps worth exploring."
+local text2 = uchar(5171) + "  " + "`text1'"
+putexcel (B10:S10) = "`text2'" , font("Calibri", 11) merge vcenter txtwrap
+
+** Results Box 6
+local text1a = "Document additional GIS information layers available in each territory - GIS data audit."
+local text1b = "Produce ED-level maps of HotN and ECHORN EDs combined."
+local text1c = "Ecological regression - neighborhood influences on CVD risk"
+local text1d = "Multi-level model of CVD risk - individual-level factors from survey + neighborhood-level factors from census."
+local text2 = "Potential Additional Work:   " + ustrunescape("\u25cf") + " `text1a'   " + ustrunescape("\u25cf") + "  `text1b'  " + ustrunescape("\u25cf") + " `text1c' " + ustrunescape("\u25cf") + " `text1d' "
+putexcel (B11:S11) = "`text2'" , font("Calibri", 11) merge vcenter txtwrap italic bold
+
 putexcel (B5:S5), border(top, medium)
-putexcel (B12:S12), border(bottom, medium)
-putexcel (B5:B12), border(left, medium)
-putexcel (S5:S12), border(right, medium) 
+putexcel (B5:S5), border(bottom, medium)
+putexcel (B10:S10), border(bottom, medium)
+putexcel (B11:S11), border(bottom, medium)
+putexcel (B5:B11), border(left, medium)
+putexcel (S5:S11), border(right, medium) 
 putexcel (B5:S5), fpattern(solid, "220 220 220")
+putexcel (B11:S11), fpattern(solid, "198 219 239")
 

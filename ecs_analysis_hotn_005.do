@@ -186,6 +186,28 @@ preserve
         graph export "`outputpath'/05_Outputs/cvdrisk_equiplot01.png", replace height(575) 
 restore
 
+** Summary statistics for the interpretation text in Excel spreadsheet
+preserve
+    collapse (mean) fram_risk10 ascvd_risk10 (min) minf = fram_risk10 mina = ascvd_risk10 (max) maxf = fram_risk10 maxa = ascvd_risk10, by(sex ed)
+    order fram_risk10 minf maxf ascvd_risk10 mina maxa 
+    foreach var in fram_risk10 minf maxf ascvd_risk10 mina maxa {
+        replace `var' = `var' * 100
+    }
+    table sex, c(mean fram_risk10 min fram_risk10 max fram_risk10) format(%9.2f)
+    table sex, c(mean ascvd_risk10 min ascvd_risk10 max ascvd_risk10) format(%9.2f)
+restore
+preserve
+    collapse (mean) fram_risk10 ascvd_risk10 (min) minf = fram_risk10 mina = ascvd_risk10 (max) maxf = fram_risk10 maxa = ascvd_risk10, by(ed)
+    order fram_risk10 minf maxf ascvd_risk10 mina maxa 
+    foreach var in fram_risk10 minf maxf ascvd_risk10 mina maxa {
+        replace `var' = `var' * 100
+    }
+    gen k = 1 
+    table k, c(mean fram_risk10 min fram_risk10 max fram_risk10) format(%9.2f)
+    table k, c(mean ascvd_risk10 min ascvd_risk10 max ascvd_risk10) format(%9.2f)
+restore
+
+
 ** -------------------------------------------------------------------------------------------------------------------- 
 *! Equiplot TWO of FRAMINGHAM versus ASCVD risk scores 
 *! And comparing the two risk scores for the various stratifications in Table 1
@@ -374,11 +396,11 @@ graph export "`outputpath'/05_Outputs/cvdrisk_equiplot02.png", replace height(57
 mata
     b=xl() 
     b.load_book("`outputpath'/05_Outputs/cvdrisk_example_Barbados.xlsx")
-    b.set_sheet("Part4")
-    b.delete_sheet("Part4")
+    b.set_sheet("Part4-Comparison")
+    b.delete_sheet("Part4-Comparison")
     b.close_book()
 end 
-putexcel set "`outputpath'/05_Outputs/cvdrisk_example_Barbados", modify sheet(Part4)
+putexcel set "`outputpath'/05_Outputs/cvdrisk_example_Barbados", modify sheet(Part4-Comparison)
 
 ** -------------------------------------------------------------------------------------------------------------------- 
 *! Create Overall title and Column titles
@@ -386,10 +408,10 @@ putexcel set "`outputpath'/05_Outputs/cvdrisk_example_Barbados", modify sheet(Pa
 putexcel A1 = "Figure 4-1. Differences in Framingham and ASCVD CVD risk scores", font("Calibri", 14) vcenter
 putexcel A2 = "Algorithms Created by:" C2 = "Ian Hambleton", font("Calibri", 12) vcenter
 putexcel A3 = "Results last updated:" C3 = "`c(current_date)'", font("Calibri", 12) vcenter
-putexcel B15 = "A. By ED. Women and Men combined", font("Calibri", 12) vcenter  
-putexcel J15 = "B. By ED. Women only", font("Calibri", 12) vcenter  
-putexcel R15 = "C. By ED. Men only", font("Calibri", 12) vcenter  
-putexcel B48 = "D. By stratifiers presented in Table 1-1", font("Calibri", 12) vcenter  
+putexcel B15 = "A. By ED. Women and Men combined", font("Calibri", 12) vcenter bold  
+putexcel J15 = "B. By ED. Women only", font("Calibri", 12) vcenter bold  
+putexcel R15 = "C. By ED. Men only", font("Calibri", 12) vcenter bold  
+putexcel B48 = "D. By stratifiers presented in Table 1-1", font("Calibri", 12) vcenter bold  
 
 
 ** -------------------------------------------------------------------------------------------------------------------- 
@@ -407,23 +429,71 @@ putexcel B51 = image("`outputpath'/05_Outputs/cvdrisk_equiplot02.png")
 mata 
     b = xl() 
     b.load_book("`outputpath'/05_Outputs/cvdrisk_example_Barbados.xlsx")
-    b.set_sheet("Part4")
-    b.set_sheet_gridlines("Part4", "off")
+    b.set_sheet("Part4-Comparison")
+    b.set_sheet_gridlines("Part4-Comparison", "off")
     b.set_column_width(1,1,25)  //make row-title column widest
     b.set_row_height(1,1,30)    //make title row bigger
     b.set_row_height(5,5,30)    //make Interpretation title row bigger
+    b.set_row_height(6,6,50)  //interpretation
+    b.set_row_height(7,7,50)  //interpretation
+    b.set_row_height(8,8,50)  //interpretation
+    b.set_row_height(9,9,50)  //interpretation
+    b.set_row_height(10,10,60)  //interpretation
+    b.set_row_height(11,11,80)  //interpretation    
+    b.set_row_height(12,12,50)  //interpretation    
     b.close_book()
 end
 
 ** -------------------------------------------------------------------------------------------------------------------- 
 *! Interpretation
 ** -------------------------------------------------------------------------------------------------------------------- 
+
 putexcel B5 = "Interpretation", font("Calibri", 12) bold vcenter  
-putexcel (B6:S12) = "hello hello hello" , font("Calibri", 11) merge vcenter
+
+** Results Box 1 
+local text1 = "We use equiplot charts to describe absolute differences between alternative CVD score systems. The equiplot allows us to visualize the absolute level of CVD risk in each participant group, and the distance between the points (represented by a solid horizontal line) shows us the absolute inequality in CVD risk."
+local text2 = uchar(5171) + "  " + "`text1'"
+putexcel (B6:S6) = "`text2'" , font("Calibri", 11) merge vcenter txtwrap
+
+** Results Box 2 
+local text1 = "Overall, ED-level 10-year CVD risk ranged from 9.3% to 25.3% using the Framingham score (mean 16.4%), and from 4.7% to 18.4% using the ACC/AHA risk score (mean 11.2%)."
+local text2 = uchar(5171) + "  " + "`text1'"
+putexcel (B7:S7) = "`text2'" , font("Calibri", 11) merge vcenter txtwrap
+
+** Results Box 3 
+local text1 = "Among men, ED-level 10-year CVD risk ranged from 10.3% to 43.5% using the Framingham score (mean 24.2%), and from 5.6% to 28.2% using the ACC/AHA risk score (mean 13.6%)."
+local text2 = uchar(5171) + "  " + "`text1'"
+putexcel (B8:S8) = "`text2'" , font("Calibri", 11) merge vcenter txtwrap
+
+** Results Box 4
+local text1 = "Among women, ED-level 10-year CVD risk ranged from 4.6% to 19.8% using the Framingham score (mean 11.8%), and from 3.4% to 16.9% using the ACC/AHA risk score (mean 9.7%)."
+local text2 = uchar(5171) + "  " + "`text1'"
+putexcel (B9:S9) = "`text2'" , font("Calibri", 11) merge vcenter txtwrap
+
+** Results Box 5
+local text1 = "The Framingham risk equation scored consistently higher than the ACC/AHA equation: on average 2.1 percentage points higher among women, 10.9 percentage points higher among men, and 5.3 percentage points higher overall. "
+local text2 = uchar(5171) + "  " + "`text1'"
+putexcel (B10:S10) = "`text2'" , font("Calibri", 11) merge vcenter txtwrap
+
+** Results Box 6
+local text1 = "The largest CVD risk differences are seem among men, and for men the Framingham and ACC/AHA model parameters are roughly the same (age, SBP, total cholesterol, HDL, smoking indicator, diabetes indicator). Generally, parameter coefficients are larger in the Framongham equation, and more work - at the parameter level - would be insightful to understand the contribution of each term to the differences seen. For women and for White participants, the ACC/AHA equation contains additional interaction term that further contribute to differences."
+local text2 = uchar(5171) + "  " + "`text1'"
+putexcel (B11:S11) = "`text2'" , font("Calibri", 11) merge vcenter txtwrap
+
+** Results Box 6
+local text1a = "Consider additional CVD risk scores. Candidates scores: QRISK, SCORE."
+local text1b = "Parameter-level investigation of contributors to CVD risk differences seen between equations."
+local text1c = "After converting to ECHORN data, consider applicability of different equations in different settings."
+local text2 = "Potential Additional Work:   " + ustrunescape("\u25cf") + " `text1a'   " + ustrunescape("\u25cf") + "  `text1b'  " + ustrunescape("\u25cf") + " `text1c' "
+putexcel (B12:S12) = "`text2'" , font("Calibri", 11) merge vcenter txtwrap italic bold
+
 putexcel (B5:S5), border(top, medium)
+putexcel (B5:S5), border(bottom, medium)
+putexcel (B11:S11), border(bottom, medium)
 putexcel (B12:S12), border(bottom, medium)
 putexcel (B5:B12), border(left, medium)
 putexcel (S5:S12), border(right, medium) 
 putexcel (B5:S5), fpattern(solid, "220 220 220")
+putexcel (B12:S12), fpattern(solid, "198 219 239")
 
 

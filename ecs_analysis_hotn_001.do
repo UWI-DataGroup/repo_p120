@@ -127,7 +127,7 @@ label values ob4 ob4
 
 #delimit ; 
 keep pid ed parish region wfinal1_ad wps_b2010 agey age_gr2 age25 age45 age65 sex female male 
-        binge fv5 bmi ow ob ob4 primary_plus second_plus tertiary prof semi_prof non_prof; 
+        binge fv5 bmi ow ob ob4 primary_plus second_plus tertiary prof semi_prof non_prof mi stroke angina; 
 #delimit cr 
 
 ** Merge with framingham risk dataset 
@@ -149,12 +149,14 @@ drop optimal_tchol optimal_hdl _merge
 keep pid ed parish region wfinal1_ad wps_b2010 sex fram_sex female male agey fram_age age_gr2 age25 age45 age65 ///
          binge fv5 bmi ow ob ob4 fram_sbp fram_sbptreat fram_smoke fram_diab fram_tchol         ///
          primary_plus second_plus tertiary prof semi_prof non_prof                              ///
-         fram_risk10 fram_optrisk10 ascvd_risk10 ascvd_optrisk10 AMR_*
+         fram_risk10 fram_optrisk10 ascvd_risk10 ascvd_optrisk10 AMR_*                          ///
+         mi stroke angina
 
 order pid ed parish region wfinal1_ad wps_b2010 sex fram_sex female male agey fram_age age_gr2 age25 age45 age65 ///
          binge fv5 bmi ow ob ob4 fram_sbp fram_sbptreat fram_smoke fram_diab fram_tchol         ///
          primary_plus second_plus tertiary prof semi_prof non_prof                              ///
-         fram_risk10 fram_optrisk10 ascvd_risk10 ascvd_optrisk10 AMR_*
+         fram_risk10 fram_optrisk10 ascvd_risk10 ascvd_optrisk10 AMR_*                          ///
+         mi stroke angina
 
 label var female "Female (1=yes, 0=no)"
 label var male "Male (1=yes, 0=no)"
