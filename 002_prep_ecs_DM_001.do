@@ -2,10 +2,10 @@
 //  algorithm name				ecs_prep_001
 //  project:							ECHORN CVD analysis
 //  analysts:							Christina HOWITT
-//	date last modified		            22-July-2019
+//	date last modified		04 Feb 2020 
 
 ** General algorithm set-up
-version 15
+version 16
 clear all
 macro drop _all
 set more 1
@@ -22,28 +22,15 @@ capture log close
 cap log using "`logpath'\ecs_prep_001", replace
 
 **Open dataset
-use "`datapath'\version02\1-input\survey_wave1.dta", clear 
+use "`datapath'\version03\01-input\echorn_dataset_020320.dta", clear 
 
 
 *********************************************************************************************************************************************************
 *   DATA MANAGEMENT
 *********************************************************************************************************************************************************
-*create 10 yr age groups (40-49, 50-59, 60-69, 70+)
-*DATA PREPARATION: INDEPENDENT VARIABLES
-*Age groups - 3 broad groups used (25-44, 45-64, 65+)
-gen agegr = .
-replace agegr=1 if partage>=40 & partage<50
-replace agegr=2 if partage>=50 & partage<60
-replace agegr=3 if partage>=60 & partage<70
-replace agegr=4 if partage>=70 & partage<.
-label define agegr 1 "40-49" 2 "50-59" 3 "60-69" 4 "70+"
-label values agegr agegr
-label var agegr "Age in 10yr bands"
-
-**Not applicable responses are coded as "999" (legitimate skip). 
-
+**Not applicable responses are coded as "999" (legitimate skip). This causes them to be included in any calculations
 *List all numeric variables
-*findname, type(numeric)
+findname, type(numeric)
 
 *recode all numeric variables
 foreach x in partage  GH62     GH188    GH274    HC66A    RPH57    HB53     D33D     D97 ///
@@ -167,4 +154,4 @@ order siteid, before (partage)
 order gender, before (partage)
 drop _merge
 
-save "`datapath'\version02\2-working\survey_wave1_weighted", replace
+save "`datapath'\version03\02-working\survey_wave1_weighted", replace 
