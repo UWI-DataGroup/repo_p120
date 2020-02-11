@@ -564,6 +564,49 @@ rename risk10 ascvd_risk10
 rename optrisk10 ascvd_optrisk10 
 drop _merge */
 
+
+**Missing variables by site
+*age
+codebook partage // no missing
+*cholesterol
+codebook fram_tchol
+codebook fram_tchol if siteid==1
+dis 108/353
+codebook fram_tchol if siteid==2
+dis 4/77
+codebook fram_tchol if siteid==3
+dis 331/1008
+*HDL chol
+codebook fram_hdl if siteid==1
+dis 109/353
+codebook fram_hdl if siteid==2
+dis 4/771
+codebook fram_hdl if siteid==3
+dis 327/1008
+codebook fram_hdl if siteid==4
+dis 176/829
+*SBP if untreated
+codebook fram_sbp if siteid==1
+dis 4/353
+codebook fram_sbp if siteid==2
+dis 5/771
+codebook fram_sbp if siteid==3
+dis 6/1008
+codebook fram_sbp if siteid==4
+dis 1/829
+*self-reported treated for HTN
+codebook fram_sbptreat // no missing
+*smoking
+codebook fram_smoke
+codebook fram_smoke if siteid==1
+dis 17/353
+codebook fram_smoke if siteid==2
+dis 3/771
+codebook fram_smoke if siteid==3
+dis 47/1008
+codebook fram_smoke if siteid==4
+dis 16/829
+
 *drop optimal_tchol optimal_hdl age_gr
 keep key siteid gender partage stroke chd angina a_rtm mi hf MET_grp predsugnc predssb fruit_per_week veges_week veges_and_fruit_per_week /// 
 age_gr2 female male age40 age50 age60 age70 educ prof semi_prof non_prof binge inactive ht bmi ow ob ob4 fram_sbp fram_sbptreat fram_smoke ///

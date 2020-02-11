@@ -113,3 +113,7 @@ mean excess, over(occ)
 mean excess, over(binge)
 mean excess, over(inactive)
 mean excess, over(ob) 
+
+**Risk categories overall and by site, including missing and excluded data
+tab risk10_cat siteid, col miss
+

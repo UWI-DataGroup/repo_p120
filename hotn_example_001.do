@@ -52,7 +52,7 @@ order age_gr2, after(agey)
 gen female = (sex==1) if !missing(sex)
 gen male = (sex==2) if !missing(sex)
 
-/** AGE indicators
+** AGE indicators
 gen age25 = (age_gr2==1) if !missing(age_gr2)
 gen age45 = (age_gr2==2) if !missing(age_gr2)
 gen age65 = (age_gr2==3) if !missing(age_gr2)
