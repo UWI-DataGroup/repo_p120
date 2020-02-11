@@ -24,13 +24,59 @@ cap log using "`logpath'\ecs_prep_001", replace
 **Open dataset
 use "`datapath'\version03\01-input\echorn_dataset_020320.dta", clear 
 
+* AGE GROUPS
+* AGE IN 10 YEAR BANDS (40-49, 50-59, 60-69, 70+)
+gen agegr =.
+replace agegr= 1 if partage >=40 & partage <50
+replace agegr= 2 if partage >=50 & partage <60
+replace agegr= 3 if partage >=60 & partage <70
+replace agegr= 4 if partage >=70 & partage <.
+label variable agegr "Age in 10 yr bands"
+label define agegr 1 "40-49 years" 2 "50-59 years" 3 "60-69 years" 4 "70+ years"
+label values agegr agegr
+
+/* AGE GROUPS
+* AGE IN 5 YEAR BANDS (40-44, 45-49, 50-54,55-59, 60-64, 65-69, 70-74, 75-79, 80-84, 85-89, 90-94, 95-99)
+gen Age5 =.
+replace Age5= 1 if partage >=40 & partage <45
+replace Age5= 2 if partage >=50 & partage <60
+replace Age5= 3 if partage >=60 & partage <70
+replace Age5= 4 if partage >=70 & partage <.
+label variable Age5 "Age in 5 yr bands"
+label define Age5 1 "40-49 years" 2 "50-59 years" 3 "60-69 years" 4 "70+ years"
+label values Age5 Age5*/
+
+*gen age5 = 5 * ceil(partage/5)
+
+
+/* tab Age5
+
+        Age |      Freq.     Percent        Cum.
+------------+-----------------------------------
+       100+ |          8        7.69        7.69
+      40-44 |          8        7.69       15.38
+      45-49 |          8        7.69       23.08
+      50-54 |          8        7.69       30.77
+      55-59 |          8        7.69       38.46
+      60-64 |          8        7.69       46.15
+      65-69 |          8        7.69       53.85
+      70-74 |          8        7.69       61.54
+      75-79 |          8        7.69       69.23
+      80-84 |          8        7.69       76.92
+      85-89 |          8        7.69       84.62
+      90-94 |          8        7.69       92.31
+      95-99 |          8        7.69      100.00
+------------+-----------------------------------
+      Total |        104      100.00  */
+
+
 
 *********************************************************************************************************************************************************
 *   DATA MANAGEMENT
 *********************************************************************************************************************************************************
 **Not applicable responses are coded as "999" (legitimate skip). This causes them to be included in any calculations
 *List all numeric variables
-findname, type(numeric)
+*findname, type(numeric)
 
 *recode all numeric variables
 foreach x in partage  GH62     GH188    GH274    HC66A    RPH57    HB53     D33D     D97 ///
@@ -147,11 +193,15 @@ GH61     GH187    GH273    HC65F    RPH56Y   HB52     D33C     D96 ///
   qui recode `x' 999=.z
 }
 
+
+
+
 *merge with weights file
-merge m:1 siteid gender agegr using "X:\The University of the West Indies\DataGroup - repo_data\data_p120\version02\2-working\ECHORN_weights.dta"
+merge m:1 siteid gender agegr  using "X:\The University of the West Indies\DataGroup - repo_data\data_p120\version02\2-working\ECHORN_weights.dta"
 order agegr un2010 un2011 un2012 un2013 un2013 un2014 un2015 UScb2010 UScb2015 _merge, after (partage)
 order siteid, before (partage)
 order gender, before (partage)
 drop _merge
 
 save "`datapath'\version03\02-working\survey_wave1_weighted", replace 
+

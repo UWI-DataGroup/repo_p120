@@ -2,27 +2,32 @@
 *	P-ECHORN DO FILE GUIDE
 *********************************************************************************************************************
 
+
+
+
 *********************************************************************************************************************
 *	HOTN EXAMPLE ANALYSES
 *********************************************************************************************************************
-*	1. hotn_ecs_cvdrisk_[NAME OF RISK SCORE]
+*	1. 001_background_(risk score)
+*      * Previously coded CVD risk score do files
+*
+*   2. hotn_ecs_cvdrisk_[NAME OF RISK SCORE]
 *		* Ensures that HOTN and risk calculator variable names are matched.
 *		* Calculates 10 year risk
 *				- Output datasets: framingham_cvdrisk.dta; who_cvdrisk_sample.dta; ascvd_cvdrisk; ascvd_cvdrisk_reduced 
 *
-*	2. hotn_example_001
+*	3. hotn_example_001
 *		* Merges the HotN dataset with the 3 risk scores to create one dataset for analysis
 *		* Prepares risk factor and disease variables
 *
-*	3. hotn_example_[002-007]
+*	4. hotn_example_[002-007]
 *		* creates analysis output in an excel sheet (20191124_cvdrisk_example_Barbados_ForYale). Each do-file 
 *		  corresponds to one tab of the workbook, with 002 corresponding to tab 1, 003 to tab 2, and so on.
 *	
-*	4. hotn_example_methods
+*	5. hotn_example_methods
 *		* inserts text describing the methods used to an excel sheet 
 *
 *********************************************************************************************************************
-
 
 
 *********************************************************************************************************************

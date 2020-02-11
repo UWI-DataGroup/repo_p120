@@ -357,9 +357,7 @@ save "`datapath'\version02\2-working\ECHORN_weights", replace
 /*************************************************************************************************************************************
 **  CREATE WEIGHTS BASED ON US CENSUS BUREAU INTERNATIONAL DATABASE
 *************************************************************************************************************************************
-
 import excel "`datapath'\version02\1-input\US2010_2015.xls", sheet("Sheet1") firstrow clear
-
 gen siteid=.
 replace siteid=1 if Country=="Virgin Islands, U.S."
 replace siteid=2 if Country=="Puerto Rico"
@@ -367,15 +365,9 @@ replace siteid=3 if Country=="Barbados"
 replace siteid=4 if Country=="Trinidad and Tobago"
 label define siteid 1 "USVI" 2 "PR" 3 "Bdos" 4 "Tdad"
 label values siteid siteid
-
 *get rid of unnecessary variables
 drop PercentBothSexes PercentMale PercentFemale SexRatio Country
 order siteid, before(Year)
 *sort out age
 encode Age, gen(Age5)
 drop Age
-
-
-/*
-gen id=_n
-reshape wide BothSexesPopulation MalePopulation FemalePopulation, i (id) j(Year)
