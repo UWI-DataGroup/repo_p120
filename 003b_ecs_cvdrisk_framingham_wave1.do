@@ -22,7 +22,6 @@
     ** Close any open log file and open a new log file
     capture log close
     log using "`logpath'\ecs_cvdrisk_framingham_wave1", replace
-** HEADER -----------------------------------------------------
 
 ** ------------------------------------------------------------
 ** FRAMINGHAM CVD RISK SCORE 
@@ -36,7 +35,7 @@
 **
 ** OUTCOME
 ** CVD - coronary death, myocardial infarction, coronary insufficiency, angina, 
-** ischemic stroke, hemorrhagic stroke, transient ischemic attack, peripheral artery disease, heart failure)
+** ischemic stroke, hemorrhagic stroke, transient ischemic attack, peripheral artery disease, heart failure
 ** 
 ** DURATION OF FOLLOW-UP
 ** Maximum of 12 years, 10-year risk prediction
@@ -109,7 +108,6 @@
 ** Smoking	                    0.61868	<.0001	1.86	(1.53, 2.25)
 ** Diabetes	                    0.77763	<.0001	2.18	(1.63, 2.91)
 ** ------------------------------------------------------------
-
 
 
 ** --------------------------------------------

@@ -74,8 +74,18 @@ gen tertiary = (educ==4)
 
 ** OCCUPATION: grouped as skilled, semi-skilled, and unskilled labour
 gen prof = (Major_Category_Code==1|Major_Category_Code==2|Major_Category_Code==3)
+label variable prof "professional occupation"
 gen semi_prof = (Major_Category_Code==4|Major_Category_Code==5|Major_Category_Code==6|Major_Category_Code==7|Major_Category_Code==8)
+label variable semi_prof "semi-professional occupation"
 gen non_prof = (Major_Category_Code==9)
+label variable non_prof "non-professional occupation"
+gen occ=.
+replace occ=1 if (Major_Category_Code==1|Major_Category_Code==2|Major_Category_Code==3)
+replace occ=2 if (Major_Category_Code==4|Major_Category_Code==5|Major_Category_Code==6|Major_Category_Code==7|Major_Category_Code==8)
+replace occ=3 if (Major_Category_Code==9)
+label variable occ "occupational group"
+label define occ 1 "Professional" 2 "Semi-professional" 3 "Non-professional"
+label values occ occ 
 
 *ALCOHOL CONSUMPTION: % with 1 or more heavy episodic drinking events in past 30 days
 *generate variable to describe prevalence of binge drinking in the past 30 days
@@ -548,16 +558,16 @@ rename risk10 fram_risk10
 rename optrisk10 fram_optrisk10 
 drop _merge 
 
-** Merge with ASCVD risk dataset 
+/** Merge with ASCVD risk dataset 
 merge 1:1 key using "`datapath'/version03/02-working/wave1_ascvd_cvdrisk"
 rename risk10 ascvd_risk10 
 rename optrisk10 ascvd_optrisk10 
-drop _merge 
+drop _merge */
 
 *drop optimal_tchol optimal_hdl age_gr
 keep key siteid gender partage stroke chd angina a_rtm mi hf MET_grp predsugnc predssb fruit_per_week veges_week veges_and_fruit_per_week /// 
 age_gr2 female male age40 age50 age60 age70 educ prof semi_prof non_prof binge inactive ht bmi ow ob ob4 fram_sbp fram_sbptreat fram_smoke ///
-fram_diab fram_hdl fram_tchol fram_age fram_risk10 fram_optrisk10 fram_sex primary_plus second_plus tertiary prof semi_prof non_prof
+fram_diab fram_hdl fram_tchol fram_age fram_risk10 fram_optrisk10 fram_sex primary_plus second_plus tertiary prof semi_prof non_prof occ
 
 order key gender fram_sex female male partage fram_age age_gr2 age40 age50 age60 age70 ///
          binge bmi ow ob ob4 fram_sbp fram_sbptreat fram_smoke fram_diab fram_tchol         ///
