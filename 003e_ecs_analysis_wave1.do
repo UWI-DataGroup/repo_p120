@@ -11,7 +11,7 @@
     clear all
     macro drop _all
     set more 1
-    set linesize 80
+    set linesize 120
 
     ** Set working directories: this is for DATASET and LOGFILE import and export
     ** DATASETS to encrypted SharePoint folder
@@ -56,6 +56,7 @@ label values risk10_cat _risk10_cat
 
 ** Excess risk
 gen excess = risk10 - fram_optrisk10 
+
 
 ** -------------------------------------------------------------------------------------------------------------------- 
 * Exclusions for Framingham: 
@@ -116,4 +117,203 @@ mean excess, over(ob)
 
 **Risk categories overall and by site, including missing and excluded data
 tab risk10_cat siteid, col miss
+
+** -------------------------------------------------------------------------------------------------------------------- 
+** Mean CVD risk score adjusted by age and gender
+* Age, Sex, education, occupation, heavy drinking, daily fruit and veg, obesity
+** -------------------------------------------------------------------------------------------------------------------- 
+**OVERALL
+        **continuous risk score
+        adjmean risk10, by(age_gr2) adjust(gender)
+        adjmean risk10, by(gender) adjust(partage)
+        adjmean risk10, by(educ) adjust(gender partage)
+        adjmean risk10, by(occ) adjust(gender partage)
+        adjmean risk10, by(binge) adjust(gender partage)
+        adjmean risk10, by(inactive) adjust(gender partage) 
+        adjmean risk10, by(ob) adjust(gender partage)
+
+        ** Mean optimal risk
+        adjmean fram_optrisk10, by(age_gr2) adjust(gender)
+        adjmean fram_optrisk10, by(gender) adjust(partage) 
+        adjmean fram_optrisk10, by(educ) adjust(gender partage)  
+        adjmean fram_optrisk10, by(occ) adjust(gender partage)
+        adjmean fram_optrisk10, by(binge) adjust(gender partage)
+        adjmean fram_optrisk10, by(inactive) adjust(gender partage)
+        adjmean fram_optrisk10, by(ob) adjust(gender partage)
+
+        **mean excess risk
+        adjmean excess, by(age_gr2) adjust(gender)
+        adjmean excess, by(gender) adjust(partage)
+        adjmean excess, by(educ) adjust(gender partage)
+        adjmean excess, by(occ) adjust(gender partage) 
+        adjmean excess, by(binge) adjust(gender partage)
+        adjmean excess, by(inactive) adjust(gender partage)
+        adjmean excess, by(ob) adjust(gender partage)
+
+        ** risk categories
+            *create 0/1 variables for each category
+            tab risk10_cat, miss
+
+                    /*
+                    risk10_cat |      Freq.     Percent        Cum.
+                    -------------+-----------------------------------
+                            low |        817       27.59       27.59
+                    intermediate |        478       16.14       43.74
+                            high |        409       13.81       57.55
+                            . |        871       29.42       86.96
+                            .z |        386       13.04      100.00
+                    -------------+-----------------------------------
+                        Total |      2,961      100.00               */
+
+            gen low=.
+            replace low=0 if risk10_cat==2 | risk10_cat==3
+            replace low=1 if risk10_cat==1
+            replace low=.z if risk10_cat==.z
+            label variable low "low Fram CVD risk"
+            label define noyes 0 "No" 1 "Yes"
+            label values low noyes
+
+            gen inter=.
+            replace inter=0 if risk10_cat==1 | risk10_cat==3
+            replace inter=1 if risk10_cat==2
+            replace inter=.z if risk10_cat==.z
+            label variable inter "intermediate Fram CVD risk"
+            label values inter noyes
+
+            gen high=.
+            replace high=0 if risk10_cat==1 | risk10_cat==2
+            replace high=1 if risk10_cat==3
+            replace high=.z if risk10_cat==.z
+            label variable high "intermediate Fram CVD risk"
+            label values high noyes
+
+                    /**check logistic regression and adjprop are the same
+                    adjprop low, by(age_gr2) adjust(gender)
+                    logistic low i.age_gr2 i.gender
+                    margin gender  */
+
+        adjprop low, by(age_gr2) adjust(gender)
+        adjprop low, by(gender) adjust(partage)
+        adjprop low, by(educ) adjust(gender partage)
+        adjprop low, by(occ) adjust(gender partage)
+        adjprop low, by(binge) adjust(gender partage)
+        adjprop low, by(inactive) adjust(gender partage)
+        adjprop low, by(ob) adjust(gender partage)
+
+        adjprop inter, by(age_gr2) adjust(gender)
+        adjprop inter, by(gender) adjust(partage)
+        adjprop inter, by(educ) adjust(gender partage)
+        adjprop inter, by(occ) adjust(gender partage)
+        adjprop inter, by(binge) adjust(gender partage)
+        adjprop inter, by(inactive) adjust(gender partage)
+        adjprop inter, by(ob) adjust(gender partage)
+
+        adjprop high, by(age_gr2) adjust(gender)
+        adjprop high, by(gender) adjust(partage)
+        adjprop high, by(educ) adjust(gender partage)
+        adjprop high, by(occ) adjust(gender partage)
+        adjprop high, by(binge) adjust(gender partage)
+        adjprop high, by(inactive) adjust(gender partage)
+        adjprop high, by(ob) adjust(gender partage)
+
+**BY SITE
+**continuous risk score
+        adjmean risk10, by(siteid) adjust(partage gender)
+        adjmean excess, by(siteid) adjust(partage gender)
+
+ **continuous risk score by site
+        **USVI
+        adjmean risk10 if siteid==1, by(age_gr2) adjust(gender)
+        adjmean risk10 if siteid==1, by(gender) adjust(partage)
+        adjmean risk10 if siteid==1, by(educ) adjust(gender partage)
+        adjmean risk10 if siteid==1, by(occ) adjust(gender partage)
+        adjmean risk10 if siteid==1, by(binge) adjust(gender partage)
+        adjmean risk10 if siteid==1, by(inactive) adjust(gender partage) 
+        adjmean risk10 if siteid==1, by(ob) adjust(gender partage)  
+
+        **PR
+        adjmean risk10 if siteid==2, by(age_gr2) adjust(gender)
+        adjmean risk10 if siteid==2, by(gender) adjust(partage)
+        adjmean risk10 if siteid==2, by(educ) adjust(gender partage)
+        adjmean risk10 if siteid==2, by(occ) adjust(gender partage)
+        adjmean risk10 if siteid==2, by(binge) adjust(gender partage)
+        adjmean risk10 if siteid==2, by(inactive) adjust(gender partage) 
+        adjmean risk10 if siteid==2, by(ob) adjust(gender partage)      
+
+        **BARBADOS
+        adjmean risk10 if siteid==3, by(age_gr2) adjust(gender)
+        adjmean risk10 if siteid==3, by(gender) adjust(partage)
+        adjmean risk10 if siteid==3, by(educ) adjust(gender partage)
+        adjmean risk10 if siteid==3, by(occ) adjust(gender partage)
+        adjmean risk10 if siteid==3, by(binge) adjust(gender partage)
+        adjmean risk10 if siteid==3, by(inactive) adjust(gender partage) 
+        adjmean risk10 if siteid==3, by(ob) adjust(gender partage) 
+
+        **TRINIDAD
+        adjmean risk10 if siteid==4, by(age_gr2) adjust(gender)
+        adjmean risk10 if siteid==4, by(gender) adjust(partage)
+        adjmean risk10 if siteid==4, by(educ) adjust(gender partage)
+        adjmean risk10 if siteid==4, by(occ) adjust(gender partage)
+        adjmean risk10 if siteid==4, by(binge) adjust(gender partage)
+        adjmean risk10 if siteid==4, by(inactive) adjust(gender partage) 
+        adjmean risk10 if siteid==4, by(ob) adjust(gender partage) 
+
+    **continuous excess risk by site
+        **USVI
+        adjmean excess if siteid==1, by(age_gr2) adjust(gender)
+        adjmean excess if siteid==1, by(gender) adjust(partage)
+        adjmean excess if siteid==1, by(educ) adjust(gender partage)
+        adjmean excess if siteid==1, by(occ) adjust(gender partage)
+        adjmean excess if siteid==1, by(binge) adjust(gender partage)
+        adjmean excess if siteid==1, by(inactive) adjust(gender partage) 
+        adjmean excess if siteid==1, by(ob) adjust(gender partage)  
+
+        **PR
+        adjmean excess if siteid==2, by(age_gr2) adjust(gender)
+        adjmean excess if siteid==2, by(gender) adjust(partage)
+        adjmean excess if siteid==2, by(educ) adjust(gender partage)
+        adjmean excess if siteid==2, by(occ) adjust(gender partage)
+        adjmean excess if siteid==2, by(binge) adjust(gender partage)
+        adjmean excess if siteid==2, by(inactive) adjust(gender partage) 
+        adjmean excess if siteid==2, by(ob) adjust(gender partage)      
+
+        **BARBADOS
+        adjmean excess if siteid==3, by(age_gr2) adjust(gender)
+        adjmean excess if siteid==3, by(gender) adjust(partage)
+        adjmean excess if siteid==3, by(educ) adjust(gender partage)
+        adjmean excess if siteid==3, by(occ) adjust(gender partage)
+        adjmean excess if siteid==3, by(binge) adjust(gender partage)
+        adjmean excess if siteid==3, by(inactive) adjust(gender partage) 
+        adjmean excess if siteid==3, by(ob) adjust(gender partage) 
+
+        **TRINIDAD
+        adjmean excess if siteid==4, by(age_gr2) adjust(gender)
+        adjmean excess if siteid==4, by(gender) adjust(partage)
+        adjmean excess if siteid==4, by(educ) adjust(gender partage)
+        adjmean excess if siteid==4, by(occ) adjust(gender partage)
+        adjmean excess if siteid==4, by(binge) adjust(gender partage)
+        adjmean excess if siteid==4, by(inactive) adjust(gender partage) 
+        adjmean excess if siteid==4, by(ob) adjust(gender partage)     
+
+
+
+**BY SITE
+** risk categories
+        adjprop low, by(siteid) adjust(partage gender)
+        adjprop low if siteid==1, by(age_gr2) adjust(gender)
+        adjprop low if siteid==2, by(age_gr2) adjust(gender)
+        adjprop low if siteid==3, by(age_gr2) adjust(gender)
+        adjprop low if siteid==4, by(age_gr2) adjust(gender)
+
+        adjprop inter, by(siteid) adjust(partage gender)
+        adjprop inter if siteid==1, by(age_gr2) adjust(gender)
+        adjprop inter if siteid==2, by(age_gr2) adjust(gender)
+        adjprop inter if siteid==3, by(age_gr2) adjust(gender)
+        adjprop inter if siteid==4, by(age_gr2) adjust(gender)
+
+        adjprop high, by(siteid) adjust(partage gender)
+        adjprop high if siteid==1, by(age_gr2) adjust(gender)
+        adjprop high if siteid==2, by(age_gr2) adjust(gender)
+        adjprop high if siteid==3, by(age_gr2) adjust(gender)
+        adjprop high if siteid==4, by(age_gr2) adjust(gender)
 

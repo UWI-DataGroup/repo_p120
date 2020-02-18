@@ -289,3 +289,4 @@ label values risk10_cat _risk10_cat
 drop *_ado _*
 label data "Wave 1 ECHORN data and Framingham 10-year CVD risk score: Feb-2020" 
 save "`datapath'/version03/02-working/wave1_framingham_cvdrisk", replace
+
