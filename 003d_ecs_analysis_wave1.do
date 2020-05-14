@@ -554,15 +554,10 @@ rename GH29E hf
 
 ** Merge with framingham risk dataset 
 merge 1:1 key using "`datapath'/version03/02-working/wave1_framingham_cvdrisk"
-rename risk10 fram_risk10 
-rename optrisk10 fram_optrisk10 
+rename bmirisk10 nolabrisk10
+rename bmirisk10_cat nolabrisk10cat
 drop _merge 
 
-/** Merge with ASCVD risk dataset 
-merge 1:1 key using "`datapath'/version03/02-working/wave1_ascvd_cvdrisk"
-rename risk10 ascvd_risk10 
-rename optrisk10 ascvd_optrisk10 
-drop _merge */
 
 
 **Missing variables by site
@@ -609,19 +604,18 @@ dis 16/829
 
 *drop optimal_tchol optimal_hdl age_gr
 keep key siteid gender partage stroke chd angina a_rtm mi hf MET_grp predsugnc predssb fruit_per_week veges_week veges_and_fruit_per_week /// 
-age_gr2 female male age40 age50 age60 age70 educ prof semi_prof non_prof binge inactive ht bmi ow ob ob4 fram_sbp fram_sbptreat fram_smoke ///
-fram_diab fram_hdl fram_tchol fram_age fram_risk10 fram_optrisk10 fram_sex primary_plus second_plus tertiary prof semi_prof non_prof occ
+age_gr2 female male educ prof semi_prof non_prof binge inactive ht bmi ow ob ob4 fram_sbp fram_sbptreat fram_smoke                        ///
+fram_diab fram_hdl fram_tchol fram_age risk10 risk10_cat optrisk10 fram_sex primary_plus second_plus tertiary prof semi_prof non_prof occ  /// 
+bp_diastolic nolabrisk10 nolabrisk10cat
 
-order key gender fram_sex female male partage fram_age age_gr2 age40 age50 age60 age70 ///
+order key gender fram_sex female male partage fram_age age_gr2                              ///
          binge bmi ow ob ob4 fram_sbp fram_sbptreat fram_smoke fram_diab fram_tchol         ///
-         primary_plus second_plus tertiary prof semi_prof non_prof                              ///
-         fram_risk10 fram_optrisk10                           ///
-         mi stroke angina   
+         primary_plus second_plus tertiary prof semi_prof non_prof                          ///
+         risk10 nolabrisk10 risk10_cat nolabrisk10cat optrisk10 mi stroke angina            ///
+          
 
 label var female "Female (1=yes, 0=no)"
 label var male "Male (1=yes, 0=no)"
-label var fram_risk10 "10-year CVD risk: Framingham risk score"
-label var fram_optrisk10 "Optimal 10-year CVD risk: Framingham risk score"
 
 ** Save the prepared HotN dataset
 label data "ECHORN wave 1 (version 03FEB2020): Prepared dataset for CVD risk analysis"

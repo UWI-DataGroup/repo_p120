@@ -138,11 +138,13 @@ label define _sbptreat 0 "no" 1 "yes"
 rename TOTAL_CHOLESTEROL tchol_mg
 rename hdl hdl_mg
 
+
 ** Diabetes re-calculation to also include undiagnosed diabetes 
 ** DIABETES - previously doctor diagnosed
-gen diabkn=.
-replace diabkn=1 if GH184==1 & GH185!=2 // excludes gestational diabetes
-replace diabkn=2 if diabkn!=1 & GH184!=.
+gen diabstat=0
+replace diabstat=1 if GH184C==3
+replace diabstat=. if GH184C==.
+replace diabstat=0 if GH185==2
 ** DIABETES based on fasting plasma glucose (note: based on ADA criteria, i.e. FPG of 126 mg/dl or higher)
 gen diabfpg=0
 replace diabfpg=1 if glucose >= 126 & glucose<.
@@ -153,11 +155,8 @@ codebook glucose if diabfpg==.
 lab var diabfpg "Diabetes based on fasting glucose"
 lab def _diab 0 "not diabetes" 1 "diabetes", modify
 ** Diabetes - reported diagnosis plus newly diagnosed on fplas
-gen diab =.
-replace diab = 1 if diabkn==1 | diabfpg==1
-replace diab = 0 if diabkn==2 & diabfpg==0
-lab val diab _diab
-lab var diab "Total diabetes - known plus fasting glucose"
+gen diab=diabstat
+replace diab=1 if diabfpg==1
 
 **Current tobacco smoking
 gen smoke=.
@@ -168,13 +167,22 @@ label define smoke 0 "Non-smoker" 1 "Current regular smoker"
 label values smoke smoke
 tab smoke siteid, miss col 
 
+**BMI
+*convert height in cm to height in m
+gen heightm = height/100
+drop height
+rename heightm height
+label variable height "height in m"
+gen bmi=weight/(height*height)
+
+
 ** Keep only what is needed
-keep key gender partage sbp sbptreat smoke diab hdl_mg tchol_mg
+keep key gender partage sbp sbptreat smoke diab hdl_mg tchol_mg bp_diastolic bmi
 
 ** --------------------------------------------
 ** PART 2. Setting your CVD model inputs 
 ** --------------------------------------------
-tempvar risk risk10 optrisk female age sbp chol hdl smoke diab trhtn 
+tempvar risk bmirisk risk10 bmirisk10 optrisk female age sbp chol hdl smoke diab trhtn bmi 
 
 ** (model set-up 2) SET THE SEX VARIABLE (male=0, female=1)
 gen fram_sex = . 
@@ -234,8 +242,13 @@ label var optimal_sbp "Optimal systolic blood pressure"
 label var optimal_tchol "Optimal total cholesterol"
 label var optimal_hdl "Optimal high density lipoprotein"
 
+** (model set-up 11) SET THE BMI VARIABLE (in kg/m2)
+gen fram_bmi = bmi  
+label var fram_bmi "Participant BMI (in kg/m2)" 
+gen `bmi' = fram_bmi
+
 ** Keep Framingham variables only 
-keep key fram_* optimal_* `female' `age' `sbp' `chol' `hdl' `smoke' `diab' `trhtn' 
+keep key fram_* optimal_* `female' `age' `sbp' `smoke' `diab' `trhtn' `bmi' `chol' `hdl'
 
 ** --------------------------------------------
 ** PART 3. Calculate Risk
@@ -258,6 +271,7 @@ replace `risk' =    ln(`age') * 2.32888 + ln(`sbp') * 2.82263 + ln(`chol') * 1.2
 gen risk10 = .
 replace risk10 = 1 - 0.88936^exp(`risk'- 23.9802) if `female' == 0	
 replace risk10 = 1 - 0.95012^exp(`risk'- 26.1931) if `female' == 1
+label variable risk10 "10yr risk, lab"
 ** Optimal 10-year CVD risk score 
 gen `optrisk' =.
 replace `optrisk' = ln(`age') * 3.06117 + ln(110) * 1.93303 + ln(160) * 1.1237 + ln(60) * -0.93263 if `female' == 0 
@@ -281,12 +295,46 @@ gen risk10_cat = .
 replace risk10_cat = 1 if risk10<0.1
 replace risk10_cat = 2 if risk10>=0.1 & risk10<0.2
 replace risk10_cat = 3 if risk10>=0.2 & risk10<.
+label variable risk10_cat "10yr risk categories, lab"
 label define _risk10_cat 1 "low" 2 "intermediate" 3 "high" 
 label values risk10_cat _risk10_cat 
 
 
+*****************************************************************************
+* RISK BASED ON BMI (NO LIPIDS)
+*****************************************************************************
+gen `bmirisk' = .
+** (Men   / No HTN Treatment) then (Men   / HTN treatment) then
+** (Women / No HTN Treatment) then (Women / HTN treatment)
+#delimit ; 
+replace `bmirisk' =   ln(`age') * 3.11296 + ln(`sbp') * 1.85508 + ln(`bmi') * 0.79277 + 
+                     `smoke' * 0.70953 + `diab' * 0.53160 if `female' == 0 & `trhtn' == 0;
+replace `bmirisk' =    ln(`age') * 3.11296 + ln(`sbp') * 1.92672 + ln(`bmi') * 0.79277 + 
+                     `smoke' * 0.70953 + `diab' * 0.53160 if `female' == 0 & `trhtn' == 1;
+replace `bmirisk' =    ln(`age') * 2.72107 + ln(`sbp') * 2.81291 + ln(`bmi') * 0.51125 + 
+                     `smoke' * 0.61868 + `diab' * 0.77763 if `female' == 1 & `trhtn' == 0;
+replace `bmirisk' =   ln(`age') * 2.72107 + ln(`sbp') * 2.88267 + ln(`bmi') * 0.51125 + 
+                      `smoke' * 0.61868 + `diab' * 0.77763 if `female' == 1 & `trhtn' == 1;
+#delimit cr
+
+** Final 10-year CVD risk score (no labs)
+gen bmirisk10 = .
+replace bmirisk10 = 1 - 0.88431^exp(`bmirisk'- 23.9388) if `female' == 0	
+replace bmirisk10 = 1 - 0.94833^exp(`bmirisk'- 26.0145) if `female' == 1
+label variable bmirisk10 "10yr risk, no lab"
+
+** CVD risk categories
+gen bmirisk10_cat = . 
+replace bmirisk10_cat = 1 if bmirisk10<0.1
+replace bmirisk10_cat = 2 if bmirisk10>=0.1 & bmirisk10<0.2
+replace bmirisk10_cat = 3 if bmirisk10>=0.2 & bmirisk10<.
+label variable bmirisk10_cat "10 yr risk categories, no lab"
+label define bmirisk10_cat 1 "low" 2 "intermediate" 3 "high" 
+label values bmirisk10_cat _risk10_cat 
+
+
 ** Save the dataset for further work 
 drop *_ado _*
-label data "Wave 1 ECHORN data and Framingham 10-year CVD risk score: Feb-2020" 
+label data "Wave 1 ECHORN data and Framingham 10-year CVD risk score: May-2020" 
 save "`datapath'/version03/02-working/wave1_framingham_cvdrisk", replace
 
