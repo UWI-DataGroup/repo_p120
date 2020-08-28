@@ -276,6 +276,20 @@ codebook emotion
 egen depress=rowtotal(GH248 GH249)
 label variable depress "PHQ-2 Depression score"
 
+***********************************************************************************************
+* SLEEP QUALITY
+***********************************************************************************************
+** Hours slept
+gen sleep=.
+replace sleep= 1 if GH242 <6
+replace sleep= 2 if GH242 >5 & GH242 <9
+replace sleep= 3 if GH242 >8 & GH242 <.
+label define sleephours 1 "5 hours or less" 2 "6 - 8 hours" 3 "9 + hours"
+label values sleep sleephours
+order sleep, after(GH242)
+tab sleep
+
+
 *ALCOHOL CONSUMPTION: % with 1 or more heavy episodic drinking events in past 30 days
 *generate variable to describe prevalence of binge drinking in the past 30 days
 gen binge=.
@@ -796,7 +810,7 @@ dis 16/829
 keep key siteid gender partage stroke chd angina a_rtm mi hf MET_grp predsugnc predssb fruit_per_week veges_week veges_and_fruit_per_week /// 
 age_gr2 female male educ prof semi_prof non_prof binge inactive ht bmi ow ob ob4 fram_sbp fram_sbptreat fram_smoke                        ///
 fram_diab fram_hdl fram_tchol fram_age risk10 risk10_cat optrisk10 fram_sex primary_plus second_plus tertiary prof semi_prof non_prof occ  /// 
-bp_diastolic nolabrisk10 nolabrisk10cat percsafe hood_score race religious spirit D16 D7 D10 D11 D12 SE25 SE26 promis emotion foodsec totMETmin depress
+bp_diastolic nolabrisk10 nolabrisk10cat percsafe hood_score race religious spirit D16 D7 D10 D11 D12 SE25 SE26 promis emotion foodsec totMETmin depress sleep 
 
 
 order key gender fram_sex female male partage fram_age age_gr2                              ///
