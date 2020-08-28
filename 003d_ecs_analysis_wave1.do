@@ -3,7 +3,6 @@
     //  algorithm name					ecs_cvdrisk_framingham.do
     //  project:				        Pediatric ECHORN (P-ECS)
     //  analysts:				       	Ian HAMBLETON and Christina Howitt
-    // 	date last modified	            
     //  algorithm task			        implementing the Framingham and ACC/AHA CVD risk scores.
 
     ** General algorithm set-up
@@ -30,7 +29,7 @@ local PATH ""`datapath'/version03/02-working/survey_wave1_weighted""
 use `PATH', clear
 
 ***************************************************************
-*   PART 1: PREPARE RISK FACTOR AND DISEASE VARIABLES
+*   PART 1: PREPARE SOCIAL DETERMINANTS, RISK FACTOR, AND DISEASE VARIABLES
 ***************************************************************
 
 * AGE GROUPS
@@ -87,6 +86,192 @@ label variable occ "occupational group"
 label define occ 1 "Professional" 2 "Semi-professional" 3 "Non-professional"
 label values occ occ 
 
+
+
+** PLACE OF RESIDENCE: NEIGHBORHOOD CHARACTERISTICS (JACKSON HEART STUDY THIRD YEAR QUESTIONNAIRE)
+** NOTES: CLARK ET AL ONLY USE ONE VARIABLE (PERCEIVED NEIGHBORHOOD SAFETY); WILL USE THAT ON IT'S OWN, BUT WILL ALSO CREATE A SCALE USING OTHER QUESTIONS.
+
+** Perceived safety: from Clark et al: Participants who agreed or strongly agreed were categorized as perceiving their neighborhood as safe; those who disagreed 
+** or strongly disagreed were categorized as perceiving their neighborhood as unsafe.
+generate percsafe=.
+replace percsafe=0 if SE17==1 | SE17==2
+replace percsafe=1 if SE17==3 | SE17==4
+label variable percsafe "Perceived neighborhood safety"
+label define percsafe 0 "Unsafe" 1 "Safe"
+label values percsafe percsafe  
+
+** CREATE NEIGHBORHOOD ATTRIBUTE SCORE (based on SE12-17)
+**Positive attributes:
+    foreach x in SE12 SE13 SE14 SE15 SE17 {
+        generate `x'_score=.
+        replace `x'_score = -2 if `x'==1
+        replace `x'_score = -1 if `x'==2
+        replace `x'_score = 1 if `x'==3
+        replace `x'_score = 2 if `x'==4
+    order `x', before(`x'_score)
+}
+
+**Negative attribute
+generate SE16_score=.
+replace SE12_score=2 if SE12==1
+replace SE12_score=1 if SE12==2
+replace SE12_score=-1 if SE12==3
+replace SE12_score=-2 if SE12==4
+
+**CREATE PROBLEMS WITH NEIGHBORHOOD SCORE (SE18-24)
+foreach x in SE18 SE19 SE20 SE21 SE22 SE23 SE24 {
+    generate `x'_score=.
+    replace `x'_score=0 if `x'==0
+    replace `x'_score=-1 if `x'==1
+    replace `x'_score=-2 if `x'==2
+    replace `x'_score=-3 if `x'==3
+}
+
+egen hood_score=rowmean(SE12_score SE13_score SE14_score SE15_score SE17_score SE16_score SE18_score SE19_score SE20_score SE21_score SE22_score SE23_score SE24_score)
+histogram hood_score
+
+
+
+** DESCRIPTION OF RACE/ETHNICITY 
+
+/*There are multiple questions for race/ethnicity (D4A-I), each with a yes/no option. One of these options is mixed or multi-racial. Suggesting that these be summarised into 
+1 variable. If multiple race categories are selected, these will be recoded into 'mixed' category. The exception is people who self identified as Black/African and Caribbean 
+- they will be categorised as Black/Afro-Caribbean */
+
+egen mixrace=rowtotal(D4A D4B D4C D4D D4E D4F D4G D4H D4I) 
+order mixrace, after(D4I)
+
+gen race=.
+replace race=1 if D4A==1
+replace race=2 if D4B==1
+replace race=2 if D4C==1
+replace race=3 if D4D==1
+replace race=4 if D4E==1
+replace race=5 if D4F==1
+replace race=6 if D4G==1
+replace race=7 if D4H==1
+replace race=8 if D4I==1
+replace race=6 if mixrace>1
+replace race=2 if D4B==1 & D4C==1
+replace race=6 if mixrace>2
+order race, after(mixrace)
+label variable race "race(self-identified)"
+label define race 1 "White" 2 "Black/Afro-Caribbean" 3 "Asian" 4 "East Indian" 5 "Hispanic/Latino" 6 "Mixed" 7 "Other" 8 "Puerto Rican/Boricua"
+label values race race 
+*list D4A D4B D4C D4D D4E D4F D4G D4H D4I race if mixrace>1 & _n<200 
+
+**   DESCRIPTION OF RELIGION IN ECHORN DATASET
+*current religious denomination
+tab D14 siteid, col miss /// not going to use this one
+
+*to what extent do you consider yourself a religious person
+tab D18 siteid, col miss // recode so numbers reflect extent of religiousness
+gen religious=.
+replace religious=0 if D18==4
+replace religious=1 if D18==3
+replace religious=2 if D18==2
+replace religious=3 if D18==1
+label variable religious "Self-reported religiousness"
+label define religious 0 "not religious" 1 "slightly religious" 2 "Moderately religious" 3 " Very religious"
+label values religious religious 
+
+
+*to what extent do you consider yourself a spiritual person
+tab D19 siteid, col miss
+gen spirit=. // recode so numbers reflect extent of religiousness
+replace spirit=0 if D19==4
+replace spirit=1 if D19==3
+replace spirit=2 if D19==2
+replace spirit=3 if D19==1
+label variable spirit "Self-reported spirituality"
+label define spirit 0 "not spritual" 1 "slightly spritual" 2 "Moderately spritual" 3 " Very spritual"
+label values spirit spirit 
+
+*How often do you go to religious services (excluding for funerals and weddings)?
+tab D16 siteid, col miss
+
+** PERCEIVED LEVEL OF INCOME RELATIVE TO REST OF POPULATION
+* Look at this figure with steps numbered 1 at the bottom to 10 at the top. If top of the ladder represents the richest people of this island and the bottom represents 
+* the poorest people of this island, on what number step would you place yourself? */
+tab D7 siteid, col miss
+histogram D7, by(siteid) width(1)
+
+** SOCIAL SUPPORT
+*  DESCRIPTION OF EMOTIONAL SUPPORT IN ECHORN DATASET (SE1 - SE4; PROMIS EMOTIONAL SUPPORT)
+*I have someone who will listen to me when I need to talk.
+tab SE1 siteid, col miss
+*I have someone to confide in or talk to about myself or my problems.
+tab SE2 siteid, col miss
+*I have someone who makes me feel appreciated.
+tab SE3 siteid, col miss
+*I have someone to talk with when I have a bad day.
+tab SE4 siteid, col miss
+**create emotional support score
+egen promis=rowmean(SE1 SE2 SE3 SE4)
+label variable promis "PROMIS emotional support score"
+codebook promis
+
+** DESCRIPTION OF SOCIAL SUPPORT IN ECHORN DATASET (SE7 - SE11; Jackson heart study social support)
+
+*How many close friends do you have (people you feel at ease with, can talk to about private matters, and can call on for help)?
+codebook SE7 if siteid==1 // USVI: Range: 0-55; missing: 8 (2%); median (IQR): 3 (2,5)
+codebook SE7 if siteid==2 // PR: Range: 0-90; missing: 7 (1%); median (IQR): 3 (2,5) 
+codebook SE7 if siteid==3 //Bds: Range: 0-58; missing: 51 (5%); median (IQR): 3 (1,5)
+codebook SE7 if siteid==4 //T'dad: Range: 0,90; missing: 21 (2%); median (IQR): 3 (2,5)
+
+*How many relatives do you have that you feel close to?
+codebook SE8 if siteid==1 // USVI: Range: 0-80; missing: 3 (1%); median (IQR): 5 (2,8)
+codebook SE8 if siteid==2 // PR: Range: 0-50; missing: 6 (1%); median (IQR): 3 (2,5)  
+codebook SE8 if siteid==3 //Bds: Range: 0-75; missing: 61 (6%); median (IQR): 4 (3,7)
+codebook SE8 if siteid==4 //T'dad: Range: 0-90; missing: 16 (2%); median (IQR): 4 (2,6)  
+
+*How many of these friends or relatives do you see at least once per month?
+codebook SE9 if siteid==1 // USVI: Range: 0-88; missing: 6 (2%); median (IQR): 3 (2,5) 
+codebook SE9 if siteid==2 // PR: Range: 0-91; missing: 6 (1%); median (IQR): 5 (3,8)  
+codebook SE9 if siteid==3 //Bds: Range:0-70; missing: 55 (5%); median (IQR): 4 (2,6)
+codebook SE9 if siteid==4 //T'dad: Range: 0-55; missing: 26 (3%); median (IQR): 4 (2,6) 
+
+*Do you belong to any social, recreational, work, church, or other community groups? (for example, PTA, neighborhood watch, etc.)?
+tab SE10 siteid, col miss
+
+/*  Do you |
+ belong to |
+       any |
+   social, |
+recreation |
+ al, work, |
+church, or |
+     other |
+ community |                    Site
+         g | US Virgin  Puerto Ri   Barbados  Trinidad  |     Total
+-----------+--------------------------------------------+----------
+        No |       162        399        406        423 |     1,390 
+           |     45.89      51.75      40.28      51.03 |     46.94 
+-----------+--------------------------------------------+----------
+       Yes |       188        371        565        401 |     1,525 
+           |     53.26      48.12      56.05      48.37 |     51.50 
+-----------+--------------------------------------------+----------
+         . |         3          1         37          5 |        46 
+           |      0.85       0.13       3.67       0.60 |      1.55 
+-----------+--------------------------------------------+----------
+     Total |       353        771      1,008        829 |     2,961 
+           |    100.00     100.00     100.00     100.00 |    100.00  */
+
+*What is the total number of groups to which you belong?
+recode SE11 .z=0 
+codebook SE11 if siteid==1 // USVI: Range: 0-20; missing: 5 (1%); median (IQR): 1 (0,2) 
+codebook SE11 if siteid==2 // PR: Range: 0-20; missing: 3 (0%); median (IQR): 0 (0,1)
+codebook SE11 if siteid==3 //Bds: Range: 0-20; missing: 6 (1%); median (IQR): 0 (0,1) 
+codebook SE11 if siteid==4 //T'dad: Range: 0-19; missing: 9; median (IQR): 0 (0,2)
+
+**create total score
+egen emotion=rowmean(SE7 SE8 SE9 SE10 SE11)
+label variable emotion "JHS emotional support scale"
+codebook emotion 
+
+
+
+
 *ALCOHOL CONSUMPTION: % with 1 or more heavy episodic drinking events in past 30 days
 *generate variable to describe prevalence of binge drinking in the past 30 days
 gen binge=.
@@ -105,8 +290,11 @@ label define binge 0 "No binge drinking" 1 "Binge drinking"
 label values binge binge 
 
 
-**FRUIT AND VEG INTAKE: Can't calculate inadequate fruit and veg intake, as the number of days fruit and veg are eaten are collected, but portion size is not
-
+**FRUIT AND VEG INTAKE: Can't calculate inadequate fruit and veg intake, as the number of days fruit and veg are eaten are collected, but portion size is not. Using days that ate fruit + days ate veg
+egen fv=rowtotal(NU12 NU13) 
+label variable fv "Days on which fruit and veg were eaten"
+**food security
+egen foodsec=rowmean( NU88 NU89 NU90 NU91 NU92 NU93 NU94 NU95 NU96)
 
 ** PHYSICAL INACTIVITY
     ** *********************************************************************************************************************************************************
@@ -549,7 +737,7 @@ rename GH29E hf
 
 
 ***************************************************************
-*   PART 2: MERGE WITH RISK SCORE DATASETS
+*   PART 2: MERGE WITH RISK SCORE DATASET
 ***************************************************************
 
 ** Merge with framingham risk dataset 
@@ -606,7 +794,8 @@ dis 16/829
 keep key siteid gender partage stroke chd angina a_rtm mi hf MET_grp predsugnc predssb fruit_per_week veges_week veges_and_fruit_per_week /// 
 age_gr2 female male educ prof semi_prof non_prof binge inactive ht bmi ow ob ob4 fram_sbp fram_sbptreat fram_smoke                        ///
 fram_diab fram_hdl fram_tchol fram_age risk10 risk10_cat optrisk10 fram_sex primary_plus second_plus tertiary prof semi_prof non_prof occ  /// 
-bp_diastolic nolabrisk10 nolabrisk10cat
+bp_diastolic nolabrisk10 nolabrisk10cat percsafe hood_score race religious spirit D16 D7 D10 D11 D12 SE25 SE26 promis emotion foodsec totMETmin
+
 
 order key gender fram_sex female male partage fram_age age_gr2                              ///
          binge bmi ow ob ob4 fram_sbp fram_sbptreat fram_smoke fram_diab fram_tchol         ///

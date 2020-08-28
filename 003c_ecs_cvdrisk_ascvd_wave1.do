@@ -85,7 +85,7 @@ label define _sex 1 "female" 0 "male",modify
 label values ascvd_sex _sex 
 label var ascvd_sex "Participant sex (0=male, 1=female)"
 
-** (model set-up 3) SET RACE / ETHNICITY VARIABLE
+/** (model set-up 3) SET RACE / ETHNICITY VARIABLE
 ** This particular parametrization fits: 
 **      African-American model if race = "black"
 **      White-American model if race = any other race/ethnicity  

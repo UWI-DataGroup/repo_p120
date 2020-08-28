@@ -3,7 +3,6 @@
     //  algorithm name					ecs_cvdrisk_framingham_wave1.do
     //  project:				        Pediatric ECHORN (P-ECS)
     //  analysts:				       	Ian HAMBLETON AND CHRISTINA HOWITT
-    // 	date last modified	            04-FEB-2020
     //  algorithm task			        implementing the Framingham CVD risk score.
 
     ** General algorithm set-up
