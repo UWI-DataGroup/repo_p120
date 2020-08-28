@@ -35,7 +35,7 @@
 ** Dataset prepared in 003d_ecs_analysis_wave1.do
 ** USE FRAMINGHAM RISK SCORE
 * ----------------------
-use "`datapath'/version03/02-working/wave1_framingham_cvdrisk", clear
+use "`datapath'/version03/02-working/wave1_framingham_cvdrisk_prepared", clear
 
 **---------------------------------------------------------------------------------------------------------------------
 ** PART TWO

@@ -34,7 +34,7 @@
 ** Dataset prepared in 003d_ecs_analysis_wave1.do
 ** USE FRAMINGHAM RISK SCORE
 * ----------------------
-use "`datapath'/version03/02-working/wave1_cvdrisk_prepared", clear
+use "`datapath'/version03/02-working/wave1_framingham_cvdrisk_prepared", clear
 
 ** -------------------------------------------------------------------------------------------------------------------- 
 ** DATA PREPARATION     
@@ -386,10 +386,6 @@ gen prev6=nolab_high*100
                 #delimit cr
 
 
-**---------------------------------------
-** SAVE DATASET FOR NEXT ANALYSIS STEPS
-**---------------------------------------
-save "`datapath'/version03/02-working/wave1_framingham_cvdrisk", replace
 
 
 /* THE BELOW CODE PRESENTS CVD RISK ADJUSTED FOR AGE AND GENDER. DECIDED NOT TO USE AS THESE ARE ACCOUNTED FOR IN THE FRAMINGHAM ALGORITHM
