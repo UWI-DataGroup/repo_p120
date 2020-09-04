@@ -22,6 +22,7 @@
     ** Close any open log file and open a new log file
     capture log close
     log using "`logpath'\ecs_cvdrisk_ascvd_wave1", replace
+
 ** HEADER -----------------------------------------------------
 
 ** REFERENCE
@@ -85,13 +86,39 @@ label define _sex 1 "female" 0 "male",modify
 label values ascvd_sex _sex 
 label var ascvd_sex "Participant sex (0=male, 1=female)"
 
-/** (model set-up 3) SET RACE / ETHNICITY VARIABLE
+** (model set-up 3) SET RACE / ETHNICITY VARIABLE
 ** This particular parametrization fits: 
 **      African-American model if race = "black"
 **      White-American model if race = any other race/ethnicity  
-gen ascvd_race = .
-replace ascvd_race = 1 if D4B==1
-replace ascvd_race = 2 if D4B<1
+
+/*There are multiple questions for race/ethnicity (D4A-I), each with a yes/no option. One of these options is mixed or multi-racial. These will be summarised into 
+1 variable. If multiple race categories are selected, these will be recoded into 'mixed' category. The exception is people who self identified as Black/African and Caribbean 
+- they will be categorised as Black/Afro-Caribbean. This designation will be used as "African American" for this model */
+
+egen mixrace=rowtotal(D4A D4B D4C D4D D4E D4F D4G D4H D4I) 
+order mixrace, after(D4I)
+
+    gen race=.
+    replace race=1 if D4A==1
+    replace race=2 if D4B==1
+    replace race=2 if D4C==1
+    replace race=3 if D4D==1
+    replace race=4 if D4E==1
+    replace race=5 if D4F==1
+    replace race=6 if D4G==1
+    replace race=7 if D4H==1
+    replace race=8 if D4I==1
+    replace race=6 if mixrace>1
+    replace race=2 if D4B==1 & D4C==1
+    replace race=6 if mixrace>2
+    order race, after(mixrace)
+    label variable race "race(self-identified)"
+    label define race 1 "White" 2 "Black/Afro-Caribbean" 3 "Asian" 4 "East Indian" 5 "Hispanic/Latino" 6 "Mixed" 7 "Other" 8 "Puerto Rican/Boricua"
+    label values race race
+
+gen ascvd_race = 2
+replace ascvd_race = 1 if race==2
+replace ascvd_race = . if race==.
 label define _race 1 "AA" 2 "WH", modify
 label values ascvd_race _race   
 
@@ -119,8 +146,11 @@ label variable ascvd_smoke "current regular smoker"
 label define ascvd_smoke 0 "Non-smoker" 1 "Current regular smoker"
 label values ascvd_smoke ascvd_smoke
 
-*diabetes: already coded as 0=no 1=yes; just rename
-rename GH184 ascvd_diab
+*diabetes: use combined variable
+gen ascvd_diab=0
+replace ascvd_diab=1 if GH184C==3
+replace ascvd_diab=. if GH184C==.
+replace ascvd_diab=0 if GH185==2
 
 ** Keep only what is needed
 keep key ascvd_*
@@ -159,7 +189,7 @@ gen `diab' = ascvd_diab
 ** SBP treatment (0=no, 1=yes) 
 gen `trhtn' = ascvd_sbptreat 
 
-** Keep Framingham variables only 
+** Keep ASCVD variables only 
 keep key ascvd_* `female' `race' `age' `sbp' `chol' `hdl' `smoke' `diab' `trhtn' 
 
 ** --------------------------------------------
@@ -221,13 +251,13 @@ replace `risk' =    ln(`age')*12.344 + ln(`sbp')*1.797 + ln(`chol')*11.853 +
 #delimit cr 
 
 ** 10-year risk score
-gen risk10 = .
-replace risk10 = 1 - 0.8954 ^ exp(`risk' - 19.54) if `race'==1 & `female' == 0
-replace risk10 = 1 - 0.9533 ^ exp(`risk' - 86.61) if `race'==1 & `female' == 1
-replace risk10 = 1 - 0.9144 ^ exp(`risk' - 61.18) if `race'==2 & `female' == 0
-replace risk10 = 1 - 0.9665 ^ exp(`risk' + 29.18) if `race'==2 & `female' == 1
+gen ascvd10 = .
+replace ascvd10 = 1 - 0.8954 ^ exp(`risk' - 19.54) if `race'==1 & `female' == 0
+replace ascvd10 = 1 - 0.9533 ^ exp(`risk' - 86.61) if `race'==1 & `female' == 1
+replace ascvd10 = 1 - 0.9144 ^ exp(`risk' - 61.18) if `race'==2 & `female' == 0
+replace ascvd10 = 1 - 0.9665 ^ exp(`risk' + 29.18) if `race'==2 & `female' == 1
 
-label var risk10 "ASCVD: 10-year CVD risk"
+label var ascvd10 "ASCVD: 10-year CVD risk"
 
 ** Optimal 10-year CVD risk score 
 gen `optrisk' =.
@@ -260,12 +290,17 @@ replace optrisk10 = 1 - 0.9533 ^ exp(`optrisk' - 86.61) if `race'==1 & `female' 
 replace optrisk10 = 1 - 0.9144 ^ exp(`optrisk' - 61.18) if `race'==2 & `female' == 0
 replace optrisk10 = 1 - 0.9665 ^ exp(`optrisk' + 29.18) if `race'==2 & `female' == 1
 
+*convert risk to %
+gen risk2 = ascvd10*100
+drop ascvd10
+rename risk2 ascvd10
+
 ** Save the dataset for further work  
-label data "Wave 1 ECHORN data and ASCVD 10-year CVD risk score: Nov-2019" 
+label data "Wave 1 ECHORN data and ASCVD 10-year CVD risk score: Aug-2020" 
 save "`datapath'/version03/02-working/wave1_ascvd_cvdrisk", replace
 
-/** Save reduced dataset for further work  (USED in ecs_analysis_hotn_004.DO)
-keep pid risk10 optrisk10 
-label data "HotN data and ASCVD 10-year CVD risk score: Nov-2019" 
-save "`datapath'/version02/2-working/ascvd_cvdrisk_reduced", replace
+** Save reduced dataset for further work  (USED 006_CVD_RiskComparison)
+keep key ascvd10 optrisk10 
+label data "ECHORN and ASCVD 10-year CVD risk score: Aug-2020" 
+save "`datapath'/version03/02-working/ascvd_reduced", replace
 

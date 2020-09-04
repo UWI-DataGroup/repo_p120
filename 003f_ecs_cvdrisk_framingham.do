@@ -88,7 +88,7 @@ regress nolabrisk10 promis
         regress nolabrisk10 promis i.siteid
                 regress nolabrisk10 promis fram_age fram_sbp bmi i.fram_smoke i.fram_diab i.gender i.fram_sbptreat i.siteid
 
-regress nolabrisk10 emotion
+regress nolabrisk10 emotion // **
         regress nolabrisk10 emotion i.siteid // **
                 regress nolabrisk10 emotion fram_age fram_sbp bmi i.fram_smoke i.fram_diab i.gender i.fram_sbptreat i.siteid
 
@@ -111,6 +111,44 @@ regress nolabrisk10 foodsec
 regress nolabrisk10 partage fram_sbp bmi i.fram_smoke i.fram_diab i.gender i.fram_sbptreat hood_score i.race i.occ i.D10 i.religious i.spirit i.D16 i.educ D7 promis emotion ///
 i.D12 i.SE25 i.SE26 i.D11 foodsec i.siteid 
 *semiprofessional occupation, very religious, slightly, moderately and very spritual
+
+** LOGISTIC REGRESSIONS WITH HIGH CVD RISK AS OUTCOME
+gen highrisk = (nolabrisk10cat==3) if !missing(nolabrisk10cat)
+logistic highrisk hood_score
+        logistic highrisk hood_score fram_age fram_sbp bmi i.fram_smoke i.gender i.fram_sbptreat 
+logistic highrisk i.percsafe
+        logistic highrisk i.percsafe fram_age fram_sbp bmi i.fram_smoke  i.gender i.fram_sbptreat
+logistic highrisk i.race
+        logistic highrisk i.race fram_age fram_sbp bmi i.fram_smoke i.gender i.fram_sbptreat 
+logistic highrisk i.occ
+        logistic highrisk i.occ fram_age fram_sbp bmi i.fram_smoke i.gender i.fram_sbptreat
+logistic highrisk i.D10
+        logistic highrisk i.D10 fram_age fram_sbp bmi i.fram_smoke i.gender i.fram_sbptreat  
+logistic highrisk i.religious
+        logistic highrisk i.religious fram_age fram_sbp bmi i.fram_smoke i.gender i.fram_sbptreat 
+logistic highrisk i.spirit
+        logistic highrisk i.spirit fram_age fram_sbp bmi i.fram_smoke i.gender i.fram_sbptreat 
+logistic highrisk i.D16
+        logistic highrisk i.D16 fram_age fram_sbp bmi i.fram_smoke i.gender i.fram_sbptreat 
+logistic highrisk i.educ
+        logistic highrisk i.educ fram_age fram_sbp bmi i.fram_smoke i.gender i.fram_sbptreat 
+logistic highrisk D7
+        logistic highrisk i.D7 fram_age fram_sbp bmi i.fram_smoke i.gender i.fram_sbptreat
+logistic highrisk promis
+        logistic highrisk promis fram_age fram_sbp bmi i.fram_smoke i.gender i.fram_sbptreat
+logistic highrisk emotion
+       logistic highrisk emotion fram_age fram_sbp bmi i.fram_smoke i.gender i.fram_sbptreat
+logistic highrisk i.D12
+        logistic highrisk i.D12 fram_age fram_sbp bmi i.fram_smoke i.gender i.fram_sbptreat 
+logistic highrisk i.SE25
+        logistic highrisk i.SE25 fram_age fram_sbp bmi i.fram_smoke i.gender i.fram_sbptreat
+logistic highrisk i.SE26
+        logistic highrisk i.SE26 fram_age fram_sbp bmi i.fram_smoke i.gender i.fram_sbptreat
+logistic highrisk i.D11
+        logistic highrisk i.D11 fram_age fram_sbp bmi i.fram_smoke i.gender i.fram_sbptreat 
+
+
+
 
 **BEHAVIOURS
 regress nolabrisk10 i.inactive 

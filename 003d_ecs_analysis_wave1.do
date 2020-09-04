@@ -796,8 +796,10 @@ dis 16/829
 keep key siteid gender partage stroke chd angina a_rtm mi hf MET_grp predsugnc predssb fruit_per_week veges_week veges_and_fruit_per_week /// 
 age_gr2 female male educ prof semi_prof non_prof binge inactive ht bmi ow ob ob4 fram_sbp fram_sbptreat fram_smoke                        ///
 fram_diab fram_hdl fram_tchol fram_age risk10 risk10_cat optrisk10 fram_sex primary_plus second_plus tertiary prof semi_prof non_prof occ  /// 
-bp_diastolic nolabrisk10 nolabrisk10cat percsafe hood_score race religious spirit D16 D7 D10 D11 D12 SE25 SE26 promis emotion foodsec totMETmin depress
+bp_diastolic bmirisk10 bmirisk10_cat percsafe hood_score race religious spirit D16 D7 D10 D11 D12 SE25 SE26 promis emotion foodsec totMETmin depress
 
+rename bmirisk10 nolabrisk10
+rename bmirisk10_cat nolabrisk10cat
 
 order key gender fram_sex female male partage fram_age age_gr2                              ///
          binge bmi ow ob ob4 fram_sbp fram_sbptreat fram_smoke fram_diab fram_tchol         ///
