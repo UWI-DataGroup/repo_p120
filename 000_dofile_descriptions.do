@@ -67,6 +67,9 @@
 *
 *   003f_ecs_cvdrisk_framingham
 *       Examines association between social determinants, health behaviours and CVD risk
+*
+*   003g_ecs_active_neighbourhood
+*       Examines association between perceived neighbourhood characteristics and active commuting/physical inactivity
 *********************************************************************************************************************
 
 
