@@ -331,6 +331,9 @@ label variable bmirisk10_cat "10 yr risk categories, no lab"
 label define bmirisk10_cat 1 "low" 2 "intermediate" 3 "high" 
 label values bmirisk10_cat _risk10_cat 
 
+**convert risk from proportions to %
+replace risk10=risk10*100
+replace bmirisk10=bmirisk10*100
 
 ** Save the dataset for further work 
 drop *_ado _*

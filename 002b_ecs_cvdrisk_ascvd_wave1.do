@@ -146,11 +146,24 @@ label variable ascvd_smoke "current regular smoker"
 label define ascvd_smoke 0 "Non-smoker" 1 "Current regular smoker"
 label values ascvd_smoke ascvd_smoke
 
-*diabetes: use combined variable
-gen ascvd_diab=0
-replace ascvd_diab=1 if GH184C==3
-replace ascvd_diab=. if GH184C==.
-replace ascvd_diab=0 if GH185==2
+** Diabetes re-calculation to also include undiagnosed diabetes 
+** DIABETES - previously doctor diagnosed
+gen diabstat=0
+replace diabstat=1 if GH184C==3
+replace diabstat=. if GH184C==.
+replace diabstat=0 if GH185==2
+** DIABETES based on fasting plasma glucose (note: based on ADA criteria, i.e. FPG of 126 mg/dl or higher)
+gen diabfpg=0
+replace diabfpg=1 if glucose >= 126 & glucose<.
+replace diabfpg=. if glucose==.
+codebook glucose if diabfpg==0
+codebook glucose if diabfpg==1
+codebook glucose if diabfpg==.
+lab var diabfpg "Diabetes based on fasting glucose"
+lab def _diab 0 "not diabetes" 1 "diabetes", modify
+** Diabetes - reported diagnosis plus newly diagnosed on fplas
+gen ascvd_diab=diabstat
+replace ascvd_diab=1 if diabfpg==1
 
 ** Keep only what is needed
 keep key ascvd_*
@@ -295,12 +308,32 @@ gen risk2 = ascvd10*100
 drop ascvd10
 rename risk2 ascvd10
 
+
+** CVD risk categories
+gen ascvd_cat = . 
+replace ascvd_cat = 1 if ascvd10<7.5
+replace ascvd_cat = 2 if ascvd10>=7.5 & ascvd10<20
+replace ascvd_cat = 3 if ascvd10>=20 & ascvd10<.
+label variable ascvd_cat "10 yr risk categories"
+label define ascvd_cat 1 "low" 2 "intermediate" 3 "high" 
+label values ascvd_cat ascvd_cat 
+
+** CVD risk categories (changing intermediate category cut-off from 7.5 to 10)
+gen ascvd2_cat = . 
+replace ascvd2_cat = 1 if ascvd10<10
+replace ascvd2_cat = 2 if ascvd10>=10 & ascvd10<20
+replace ascvd2_cat = 3 if ascvd10>=20 & ascvd10<.
+label variable ascvd2_cat "10 yr risk categories"
+label define ascvd2_cat 1 "low" 2 "intermediate" 3 "high" 
+label values ascvd2_cat ascvd2_cat 
+
+
 ** Save the dataset for further work  
 label data "Wave 1 ECHORN data and ASCVD 10-year CVD risk score: Aug-2020" 
 save "`datapath'/version03/02-working/wave1_ascvd_cvdrisk", replace
 
-** Save reduced dataset for further work  (USED 006_CVD_RiskComparison)
-keep key ascvd10 optrisk10 
+** Save reduced dataset for further work  
+keep key ascvd10 optrisk10 ascvd_cat
 label data "ECHORN and ASCVD 10-year CVD risk score: Aug-2020" 
 save "`datapath'/version03/02-working/ascvd_reduced", replace
 

@@ -31,6 +31,25 @@ import excel "`datapath'\version03\01-input\addresses_CDRC.xlsx", sheet("address
 * MERGE WITH ECHORN CVD RISK DATASET
 merge 1:1 key using "`datapath'\version03\02-working\wave1_framingham_cvdrisk_prepared.dta"
 order siteid, after(key)
+drop _merge
+tempfile ad1 ad2 
+save `ad1', replace 
+
+*MERGE with PR census tract data
+use "`datapath'\version03\01-input\PR_Geocoded_Census_Tract_ECHORN.dta", clear
+drop if key==""
+merge 1:1 key using `ad1'
+drop _merge
+save `ad2', replace
+
+
+*merge with USVI estate data
+use "`datapath'\version03\01-input\USVI_geocoded_estates_echorn_070920.dta", clear
+keep key ESTATEFP
+rename ESTATEFP ED
+merge 1:1 key using `ad2'
+
+
 destring ED, generate(ED1)
 order ED1, after(ED)
 drop ED
@@ -237,6 +256,191 @@ preserve
     list dm mdm rrm idm if _n==1
     list dc mdc rrc idc if _n==1
 restore
+
+*USVI ONLY 
+tempfile uswomen usmen uscombine
+
+*women only 
+preserve
+        keep if siteid==1
+        keep if gender==2
+        collapse (mean) nolabrisk10, by (ED)
+            ** SIMPLE ABSOLUTE
+            egen rminw = min(nolabrisk10)
+            egen rmaxw = max(nolabrisk10) 
+            gen dw = rmaxw - rminw
+            ** SIMPLE RELATIVE
+            gen rrw = rmaxw / rminw
+            ** COMPLEX ABSOLUTE. Mean Absolute Deviation from BEST rate (MD) 
+            gen Jw =  _N-1
+            gen rdiffw = abs(rminw - nolabrisk10)
+            egen mdw = sum(rdiffw/Jw)
+            ** COMPLEX RELATIVE. Index of Disparity
+            gen idw = (mdw / rminw) * 100
+            sca sc_dw = dw
+            sca sc_mdw = mdw 
+            sca sc_rrw = rrw 
+            sca sc_idw = idw 
+            drop Jw rminw rdiffw
+            save `uswomen'
+restore
+
+*men only 
+preserve
+        keep if siteid==1
+        keep if gender==1
+        collapse (mean) nolabrisk10, by (ED)
+            ** SIMPLE ABSOLUTE
+            egen rminm = min(nolabrisk10)
+            egen rmaxm = max(nolabrisk10) 
+            gen dm = rmaxm - rminm
+            ** SIMPLE RELATIVE
+            gen rrm = rmaxm / rminm
+            ** COMPLEX ABSOLUTE. Mean Absolute Deviation from BEST rate (MD) 
+            gen Jm =  _N-1
+            gen rdiffm = abs(rminm - nolabrisk10)
+            egen mdm = sum(rdiffm/Jm)
+            ** COMPLEX RELATIVE. Index of Disparity
+            gen idm = (mdm / rminm) * 100
+            sca sc_dm = dm 
+            sca sc_mdm = mdm 
+            sca sc_rrm = rrm 
+            sca sc_idm = idm 
+            drop Jm rminm rdiffm
+            save `usmen'
+restore
+
+*men and women combined 
+preserve
+        keep if siteid==1
+        collapse (mean) nolabrisk10, by (ED)
+            ** SIMPLE ABSOLUTE
+            egen rminc = min(nolabrisk10)
+            egen rmaxc = max(nolabrisk10) 
+            gen dc = rmaxc - rminc
+            ** SIMPLE RELATIVE
+            gen rrc = rmaxc / rminc
+            ** COMPLEX ABSOLUTE. Mean Absolute Deviation from BEST rate (MD) 
+            gen Jc =  _N-1
+            gen rdiffc = abs(rminc - nolabrisk10)
+            egen mdc = sum(rdiffc/Jc)
+            ** COMPLEX RELATIVE. Index of Disparity
+            gen idc = (mdc / rminc) * 100
+            sca sc_dc = dc
+            sca sc_mdc = mdc 
+            sca sc_rrc = rrc 
+            sca sc_idc = idc 
+            drop Jc rminc rdiffc
+            save `uscombine'
+restore
+
+
+**List inequality metrics for table
+preserve
+        use `uswomen', clear
+        merge 1:1 ED using `usmen'
+        drop _merge
+        merge 1:1 ED using `uscombine'
+        drop _merge
+
+    list dw mdw rrw idw if _n==1
+    list dm mdm rrm idm if _n==2
+    list dc mdc rrc idc if _n==1
+restore
+
+
+*PR ONLY 
+tempfile prwomen prmen prcombine
+
+*women only 
+preserve
+        keep if siteid==2
+        keep if gender==2
+        collapse (mean) nolabrisk10, by (ED)
+            ** SIMPLE ABSOLUTE
+            egen rminw = min(nolabrisk10)
+            egen rmaxw = max(nolabrisk10) 
+            gen dw = rmaxw - rminw
+            ** SIMPLE RELATIVE
+            gen rrw = rmaxw / rminw
+            ** COMPLEX ABSOLUTE. Mean Absolute Deviation from BEST rate (MD) 
+            gen Jw =  _N-1
+            gen rdiffw = abs(rminw - nolabrisk10)
+            egen mdw = sum(rdiffw/Jw)
+            ** COMPLEX RELATIVE. Index of Disparity
+            gen idw = (mdw / rminw) * 100
+            sca sc_dw = dw
+            sca sc_mdw = mdw 
+            sca sc_rrw = rrw 
+            sca sc_idw = idw 
+            drop Jw rminw rdiffw
+            save `prwomen'
+restore
+
+*men only 
+preserve
+        keep if siteid==2
+        keep if gender==1
+        collapse (mean) nolabrisk10, by (ED)
+            ** SIMPLE ABSOLUTE
+            egen rminm = min(nolabrisk10)
+            egen rmaxm = max(nolabrisk10) 
+            gen dm = rmaxm - rminm
+            ** SIMPLE RELATIVE
+            gen rrm = rmaxm / rminm
+            ** COMPLEX ABSOLUTE. Mean Absolute Deviation from BEST rate (MD) 
+            gen Jm =  _N-1
+            gen rdiffm = abs(rminm - nolabrisk10)
+            egen mdm = sum(rdiffm/Jm)
+            ** COMPLEX RELATIVE. Index of Disparity
+            gen idm = (mdm / rminm) * 100
+            sca sc_dm = dm 
+            sca sc_mdm = mdm 
+            sca sc_rrm = rrm 
+            sca sc_idm = idm 
+            drop Jm rminm rdiffm
+            save `prmen'
+restore
+
+*men and women combined 
+preserve
+        keep if siteid==2
+        collapse (mean) nolabrisk10, by (ED)
+            ** SIMPLE ABSOLUTE
+            egen rminc = min(nolabrisk10)
+            egen rmaxc = max(nolabrisk10) 
+            gen dc = rmaxc - rminc
+            ** SIMPLE RELATIVE
+            gen rrc = rmaxc / rminc
+            ** COMPLEX ABSOLUTE. Mean Absolute Deviation from BEST rate (MD) 
+            gen Jc =  _N-1
+            gen rdiffc = abs(rminc - nolabrisk10)
+            egen mdc = sum(rdiffc/Jc)
+            ** COMPLEX RELATIVE. Index of Disparity
+            gen idc = (mdc / rminc) * 100
+            sca sc_dc = dc
+            sca sc_mdc = mdc 
+            sca sc_rrc = rrc 
+            sca sc_idc = idc 
+            drop Jc rminc rdiffc
+            save `prcombine'
+restore
+
+
+**List inequality metrics for table
+preserve
+        use `prwomen', clear
+        merge 1:1 ED using `prmen'
+        drop _merge
+        merge 1:1 ED using `prcombine'
+        drop _merge
+
+    list dw mdw rrw idw if _n==1
+    list dm mdm rrm idm if _n==2
+    list dc mdc rrc idc if _n==1
+restore
+
+
 **----------------------------------------------------------------------
 ** ORDERED BAR CHARTS
 **----------------------------------------------------------------------
@@ -324,7 +528,7 @@ graph export "`outputpath'/fram_orderedbar_BBmen.png", replace width(250)
 		graphregion(color(gs16) ic(gs16) ilw(thin) lw(thin)) 
 		ysize(12) xsize(7)
 	
-		ylab(5(5)45,
+		ylab(10(10)80,
 		labs(4) notick grid glc(gs14) angle(0) format(%9.0f))
 		ytitle("", margin(t=3) size(3.75))
 		yscale(lw(vthin) reverse noline fill range(7(1)26))
@@ -348,7 +552,7 @@ graph export "`outputpath'/fram_orderedbar_TTall.png", replace width(250)
 		graphregion(color(gs16) ic(gs16) ilw(thin) lw(thin)) 
 		ysize(12) xsize(7)
 	
-		ylab(5(5)50,
+		ylab(10(10)80,
 		labs(4) notick grid glc(gs14) angle(0) format(%9.0f))
 		ytitle("", margin(t=3) size(3.75))
 		yscale(lw(vthin) reverse noline fill range(7(1)26))
@@ -384,3 +588,150 @@ graph export "`outputpath'/fram_orderedbar_TTwomen.png", replace width(250)
         ;
 #delimit cr	
 graph export "`outputpath'/fram_orderedbar_TTmen.png", replace width(250)
+
+
+** WOMEN and MEN in USVI
+#delimit ;
+		gr hbar nolabrisk10 if siteid==1,
+	
+		over(ED, sort(1) lab(nolab labs(2.75)) axis(noline)) exclude0
+		bar(1, col("254 153 41")) bargap(2)	
+				
+		plotregion(c(gs16) ic(gs16) ilw(thin) lw(thin)) 
+		graphregion(color(gs16) ic(gs16) ilw(thin) lw(thin)) 
+		ysize(12) xsize(7)
+	
+		ylab(5(10)65,
+		labs(4) notick grid glc(gs14) angle(0) format(%9.0f))
+		ytitle("", margin(t=3) size(3.75))
+		yscale(lw(vthin) reverse noline fill range(7(1)26))
+
+        text(43 80 `"{fontface "Calibri Light":MD}"', place(c) size(8) color(gs2))
+        text(43 85 `"{fontface "Calibri Light":14.2}"', place(c) size(8) color(gs2))
+		legend(off)
+		name(cvd_risk_all_US)
+        ;
+#delimit cr	
+graph export "`outputpath'/fram_orderedbar_USall.png", replace width(250)
+
+** WOMEN in USVI
+#delimit ;
+		gr hbar nolabrisk10 if siteid==1 & gender==2,
+	
+		over(ED, sort(1) lab(nolab labs(2.75)) axis(noline)) exclude0
+		bar(1, col("254 196 79")) bargap(2)	
+				
+		plotregion(c(gs16) ic(gs16) ilw(thin) lw(thin)) 
+		graphregion(color(gs16) ic(gs16) ilw(thin) lw(thin)) 
+		ysize(12) xsize(7)
+	
+		ylab(5(10)65,
+		labs(4) notick grid glc(gs14) angle(0) format(%9.0f))
+		ytitle("", margin(t=3) size(3.75))
+		yscale(lw(vthin) reverse noline fill range(7(1)26))
+
+        text(43 80 `"{fontface "Calibri Light":MD}"', place(c) size(8) color(gs2))
+        text(43 85 `"{fontface "Calibri Light":10.5}"', place(c) size(8) color(gs2))
+		legend(off)
+		name(cvd_risk_women_US)
+        ;
+#delimit cr	
+graph export "`outputpath'/fram_orderedbar_USwomen.png", replace width(250)
+
+** MEN in USVI
+#delimit ;
+		gr hbar nolabrisk10 if siteid==1 & gender==1,
+	
+		over(ED, sort(1) lab(nolab labs(2.75)) axis(noline)) exclude0
+		bar(1, col("236 112 20")) bargap(2)	
+				
+		plotregion(c(gs16) ic(gs16) ilw(thin) lw(thin)) 
+		graphregion(color(gs16) ic(gs16) ilw(thin) lw(thin)) 
+		ysize(12) xsize(7)
+	
+		ylab(5(10)65,
+		labs(4) notick grid glc(gs14) angle(0) format(%9.0f))
+		ytitle("", margin(t=3) size(3.75))
+		yscale(lw(vthin) reverse noline fill range(7(1)26))
+
+        text(43 80 `"{fontface "Calibri Light":MD}"', place(c) size(8) color(gs2))
+        text(43 85 `"{fontface "Calibri Light":15.4}"', place(c) size(8) color(gs2))
+		legend(off)
+		name(cvd_risk_men_US)
+        ;
+#delimit cr	
+graph export "`outputpath'/fram_orderedbar_USmen.png", replace width(250)
+
+
+
+** WOMEN and MEN in PR
+#delimit ;
+		gr hbar nolabrisk10 if siteid==2,
+	
+		over(ED, sort(1) lab(nolab labs(2.75)) axis(noline)) exclude0
+		bar(1, col("254 153 41")) bargap(2)	
+				
+		plotregion(c(gs16) ic(gs16) ilw(thin) lw(thin)) 
+		graphregion(color(gs16) ic(gs16) ilw(thin) lw(thin)) 
+		ysize(12) xsize(7)
+	
+		ylab(5(10)90,
+		labs(4) notick grid glc(gs14) angle(0) format(%9.0f))
+		ytitle("", margin(t=3) size(3.75))
+		yscale(lw(vthin) reverse noline fill range(7(1)26))
+
+        text(43 80 `"{fontface "Calibri Light":MD}"', place(c) size(8) color(gs2))
+        text(43 85 `"{fontface "Calibri Light":17.2}"', place(c) size(8) color(gs2))
+		legend(off)
+		name(cvd_risk_all_PR)
+        ;
+#delimit cr	
+graph export "`outputpath'/fram_orderedbar_PRall.png", replace width(250)
+
+** WOMEN in PR
+#delimit ;
+		gr hbar nolabrisk10 if siteid==2 & gender==2,
+	
+		over(ED, sort(1) lab(nolab labs(2.75)) axis(noline)) exclude0
+		bar(1, col("254 196 79")) bargap(2)	
+				
+		plotregion(c(gs16) ic(gs16) ilw(thin) lw(thin)) 
+		graphregion(color(gs16) ic(gs16) ilw(thin) lw(thin)) 
+		ysize(12) xsize(7)
+	
+		ylab(5(10)90,
+		labs(4) notick grid glc(gs14) angle(0) format(%9.0f))
+		ytitle("", margin(t=3) size(3.75))
+		yscale(lw(vthin) reverse noline fill range(7(1)26))
+
+        text(43 80 `"{fontface "Calibri Light":MD}"', place(c) size(8) color(gs2))
+        text(43 85 `"{fontface "Calibri Light":12.9}"', place(c) size(8) color(gs2))
+		legend(off)
+		name(cvd_risk_women_PR)
+        ;
+#delimit cr	
+graph export "`outputpath'/fram_orderedbar_PRwomen.png", replace width(250)
+
+** MEN in PR
+#delimit ;
+		gr hbar nolabrisk10 if siteid==2 & gender==1,
+	
+		over(ED, sort(1) lab(nolab labs(2.75)) axis(noline)) exclude0
+		bar(1, col("236 112 20")) bargap(2)	
+				
+		plotregion(c(gs16) ic(gs16) ilw(thin) lw(thin)) 
+		graphregion(color(gs16) ic(gs16) ilw(thin) lw(thin)) 
+		ysize(12) xsize(7)
+	
+		ylab(5(10)90,
+		labs(4) notick grid glc(gs14) angle(0) format(%9.0f))
+		ytitle("", margin(t=3) size(3.75))
+		yscale(lw(vthin) reverse noline fill range(7(1)26))
+
+        text(43 80 `"{fontface "Calibri Light":MD}"', place(c) size(8) color(gs2))
+        text(43 85 `"{fontface "Calibri Light":23.0}"', place(c) size(8) color(gs2))
+		legend(off)
+		name(cvd_risk_men_PR)
+        ;
+#delimit cr	
+graph export "`outputpath'/fram_orderedbar_PRmen.png", replace width(250)
