@@ -777,7 +777,7 @@ replace xax4 = xax4+0.5 if xax4>=1 &  xax4<=5;
 ***************************************************************************************************
 
 
-** Extra rows to create RISK MATRIX. Can drop for analysis and N will = 1234 - missing data (1,106)
+** Extra rows to create RISK MATRIX. Can drop for analysis and N will = 1234 - missing data (1,106) 
 drop if pcount==0
 
 ** Set as survey dataset

@@ -116,6 +116,7 @@ putexcel G54 = "F. By Parish. Men only", font("Calibri", 12) vcenter bold
 *! SIMPLE MEASURES: ABSOLUTE DIFFERENCE (D) and RELATIVE RATIO (RR)
 *! COMPLEX MEASURES: MEAN ABSOLUTE DIFFERENCE (MD) and the INDEX OF DISPARITY (ID)
 ** -------------------------------------------------------------------------------------------------------------------- 
+*
 local col = "D" 
 foreach var in ed parish {
     ** WOMEN / by ED
@@ -243,7 +244,7 @@ mata
     b.close_book()
 end
 
-*/
+
 
 ** -------------------------------------------------------------------------------------------------------------------- 
 *! Ordered bar chart formatting 

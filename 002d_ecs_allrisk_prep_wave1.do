@@ -3,7 +3,7 @@
     //  algorithm name					ecs_cvdrisk_framingham.do
     //  project:				        Pediatric ECHORN (P-ECS)
     //  analysts:				       	Ian HAMBLETON and Christina Howitt
-    //  algorithm task			        implementing the Framingham and ACC/AHA CVD risk scores.
+    //  algorithm task			        implementing the Framingham, ACC/AHA and WHO CVD risk scores.
 
     ** General algorithm set-up
     version 16
@@ -20,7 +20,7 @@
 
     ** Close any open log file and open a new log file
     capture log close
-    log using "`logpath'\ecs_analysis_wave1_001", replace
+    log using "`logpath'\ecs_allrisk_prep", replace
 
 ** HEADER -----------------------------------------------------
 
@@ -128,7 +128,7 @@ foreach x in SE18 SE19 SE20 SE21 SE22 SE23 SE24 {
 }
 
 egen hood_score=rowmean(SE12_score SE13_score SE14_score SE15_score SE17_score SE16_score SE18_score SE19_score SE20_score SE21_score SE22_score SE23_score SE24_score)
-histogram hood_score
+*histogram hood_score
 
 
 
@@ -194,7 +194,7 @@ tab D16 siteid, col miss
 * Look at this figure with steps numbered 1 at the bottom to 10 at the top. If top of the ladder represents the richest people of this island and the bottom represents 
 * the poorest people of this island, on what number step would you place yourself? */
 tab D7 siteid, col miss
-histogram D7, by(siteid) width(1)
+*histogram D7, by(siteid) width(1)
 
 ** SOCIAL SUPPORT
 *  DESCRIPTION OF EMOTIONAL SUPPORT IN ECHORN DATASET (SE1 - SE4; PROMIS EMOTIONAL SUPPORT)
@@ -276,6 +276,7 @@ codebook emotion
 egen depress=rowtotal(GH248 GH249)
 label variable depress "PHQ-2 Depression score"
 
+
 ***********************************************************************************************
 * SLEEP QUALITY
 ***********************************************************************************************
@@ -288,7 +289,6 @@ label define sleephours 1 "5 hours or less" 2 "6 - 8 hours" 3 "9 + hours"
 label values sleep sleephours
 order sleep, after(GH242)
 tab sleep
-
 
 *ALCOHOL CONSUMPTION: % with 1 or more heavy episodic drinking events in past 30 days
 *generate variable to describe prevalence of binge drinking in the past 30 days
@@ -755,16 +755,26 @@ rename GH29E hf
 
 
 ***************************************************************
-*   PART 2: MERGE WITH RISK SCORE DATASET
+*   PART 2: MERGE WITH RISK SCORE DATASETS
 ***************************************************************
 
 ** Merge with framingham risk dataset 
 merge 1:1 key using "`datapath'/version03/02-working/wave1_framingham_cvdrisk"
 drop _merge 
 
+** Merge with ASCVD risk dataset 
+merge 1:1 key using "`datapath'/version03/02-working/wave1_ascvd_cvdrisk"
+drop _merge 
+order key, before(risk10)
+
+** Merge with WHO dataset
+merge 1:1 key using "`datapath'/version03/02-working/wave1_who_cvdrisk"
 
 
-**Missing variables by site
+
+
+
+/**Missing variables by site
 *age
 codebook partage // no missing
 *cholesterol
@@ -805,23 +815,41 @@ codebook fram_smoke if siteid==3
 dis 47/1008
 codebook fram_smoke if siteid==4
 dis 16/829
+*/
 
-*drop optimal_tchol optimal_hdl age_gr
 keep key siteid gender partage stroke chd angina a_rtm mi hf MET_grp predsugnc predssb fruit_per_week veges_week veges_and_fruit_per_week /// 
 age_gr2 female male educ prof semi_prof non_prof binge inactive ht bmi ow ob ob4 fram_sbp fram_sbptreat fram_smoke                        ///
-fram_diab fram_hdl fram_tchol fram_age risk10 risk10_cat optrisk10 fram_sex primary_plus second_plus tertiary prof semi_prof non_prof occ  /// 
-bp_diastolic nolabrisk10 nolabrisk10cat percsafe hood_score race religious spirit D16 D7 D10 D11 D12 SE25 SE26 promis emotion foodsec totMETmin depress sleep 
+fram_diab fram_hdl fram_tchol risk10 risk10_cat optrisk10 fram_sex primary_plus second_plus tertiary prof semi_prof non_prof occ  /// 
+bp_diastolic bmirisk10 bmirisk10_cat percsafe hood_score race religious spirit D16 D7 D10 D11 D12 SE25 SE26 promis emotion foodsec totMETmin ///
+depress sleep GH242 GH243 GH244 GH245 GH246 GH247 WHO_nolab WHO_gen WHObmi_cat WHOgen_cat ascvd10 ascvd_cat ascvd2_cat
 
+rename fram_sbp sbp 
+rename fram_sbptreat sbptreat
+rename fram_smoke smoke
+rename fram_diab diab  
+rename fram_hdl hdl 
+rename fram_tchol tchol
 
-order key gender fram_sex female male partage fram_age age_gr2                              ///
-         binge bmi ow ob ob4 fram_sbp fram_sbptreat fram_smoke fram_diab fram_tchol         ///
-         primary_plus second_plus tertiary prof semi_prof non_prof depress                  ///
-         risk10 nolabrisk10 risk10_cat nolabrisk10cat optrisk10 mi stroke angina            ///
+rename bmirisk10 frsim10
+rename bmirisk10_cat frsimcat
+
+order key siteid gender fram_sex female male partage age_gr2                        ///
+         binge bmi ow ob ob4 sbp sbptreat smoke diab tchol mi stroke angina        ///
+         risk10 frsim10 risk10_cat frsimcat WHO_nolab WHO_gen WHObmi_cat WHOgen_cat ascvd10 ascvd_cat ascvd2_cat
+        
           
 
 label var female "Female (1=yes, 0=no)"
 label var male "Male (1=yes, 0=no)"
 
-** Save the prepared HotN dataset
+rename risk10 frrisk10
+label variable frrisk10 "Fram Gen: 10yr CVD risk"
+rename risk10_cat frcat 
+label variable frcat "Fram Gen risk categories"
+label variable WHO_nolab "Simplified WHO CVD risk"
+label variable WHO_gen "WHO gen: 10 yr CVD risk"
+label variable ascvd10 "AHA/ASCVD: 10 yr CVD risk"
+
+** Save the prepared dataset
 label data "ECHORN wave 1 (version 03FEB2020): Prepared dataset for CVD risk analysis"
-save "`datapath'/version03/02-working/wave1_framingham_cvdrisk_prepared", replace
+save "`datapath'/version03/02-working/wave1_framingham_allcvdrisk_prepared", replace
