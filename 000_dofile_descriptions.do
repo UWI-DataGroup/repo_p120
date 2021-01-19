@@ -43,6 +43,7 @@
 *		Creates post-stratification survey weights based on UN WPP, US Census Bureau, and 	
 *		local censuses for a variety of years between 2010 and 2015
 *				- Output dataset: ECHORN_weights.dta
+*       NOTE: WE DECIDED NOT TO USE WEIGHTS AS SAMPLING SCHEME DOES NOT RESULT IN NATIONALLY REPRESENTATIVE SAMPLE
 *
 *	001_ecs_prep_DM
 *		Brings in dataset created by Yale and prepares it for analysis by:
@@ -79,7 +80,9 @@
 *
 *   003d_ecs_CVDInequality
 *       Explores inequality by place of residence
-*
+*   
+*   003e_ecs_active_neighbourhood
+*       Explores the association between perceived social neighborhood and active commuting
 *   
 *********************************************************************************************************************
 
