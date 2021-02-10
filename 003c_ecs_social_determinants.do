@@ -35,18 +35,16 @@
 ** Dataset prepared in 003d_ecs_analysis_wave1.do
 ** USE FRAMINGHAM RISK SCORE
 * ----------------------
-use "`datapath'/version03/02-working/wave1_framingham_allcvdrisk_prepared", clear
+use "`datapath'/version03/02-working/risk_comparison", clear 
 
-*create dichotomous variable for high risk
-gen highrisk = (frsimcat==3) if !missing(frsimcat)
+rename partage age 
 
 **---------------------------------------------------------------------------------------------------------------------
 ** PART TWO
 ** REGRESSION: PROGRESS+ SOCIAL DETERMINANTS AND CVD RISK
 **---------------------------------------------------------------------------------------------------------------------
 
-** REGRESSIONS: UNIVARIATE, THEN WITH FRAMINGHAM COMPONENTS
-** SOCIAL frsimcat
+*/* REGRESSIONS: UNIVARIATE, THEN WITH FRAMINGHAM COMPONENTS
 regress frsim10 hood_score
         regress frsim10 hood_score i.siteid 
                 regress frsim10 hood_score age sbp bmi i.smoke i.diab i.gender i.sbptreat i.siteid 
@@ -66,6 +64,8 @@ regress frsim10 i.D10
         regress frsim10 i.D10 i.siteid
                 regress frsim10 i.D10 age sbp bmi i.smoke i.diab i.gender i.sbptreat i.siteid  // compared with non-transsexual or transgender people, CVD risk is on average 5.4 pp (95%CI: 2.36, 8.5) higher in gender non-conforming people 
 
+
+
 regress frsim10 i.religious
         regress frsim10 i.religious i.siteid
                 regress frsim10 i.religious age sbp bmi i.smoke i.diab i.gender i.sbptreat i.siteid 
@@ -77,6 +77,7 @@ regress frsim10 i.spirit
 regress frsim10 i.D16
         regress frsim10 i.D16 i.siteid
                 regress frsim10 i.D16 age sbp bmi i.smoke i.diab i.gender i.sbptreat i.siteid  //  Compared with those who never attend religious ceremonies, CVD risk is on average 0.1 pp lower in people who attend more than once per week (-3.66, -0.78)
+
 
 regress frsim10 i.educ
         regress frsim10 i.educ i.siteid
@@ -110,7 +111,7 @@ regress frsim10 foodsec
         regress frsim10 foodsec i.siteid // **
                 regress frsim10 foodsec age sbp bmi i.smoke i.diab i.gender i.sbptreat i.siteid 
 
-regress frsim10 partage sbp bmi i.smoke i.diab i.gender i.sbptreat hood_score i.race i.occ i.D10 i.religious i.spirit i.D16 i.educ D7 promis emotion ///
+regress frsim10 age sbp bmi i.smoke i.diab i.gender i.sbptreat hood_score i.race i.occ i.D10 i.religious i.spirit i.D16 i.educ D7 promis emotion ///
 i.D12 i.SE25 i.SE26 i.D11 foodsec i.siteid 
 *semiprofessional occupation, very religious, slightly, moderately and very spritual
 
@@ -162,7 +163,7 @@ regress frsimcat veges_and_fruit_per_week
         regress frsimcat veges_and_fruit_per_week age sbp bmi i.smoke i.diab i.gender i.sbptreat i.siteid 
 
 ** BEHAVIOURS AND SOCIAL DETERMINANTS
-regress frsimcat partage sbp bmi i.smoke i.diab i.gender i.sbptreat i.gender hood_score i.race i.occ i.D10 i.religious i.spirit i.D16 i.educ D7 promis emotion i.D12 i.SE25 i.SE26 i.D11 i.inactive i.binge veges_and_fruit_per_week
+regress frsimcat age sbp bmi i.smoke i.diab i.gender i.sbptreat i.gender hood_score i.race i.occ i.D10 i.religious i.spirit i.D16 i.educ D7 promis emotion i.D12 i.SE25 i.SE26 i.D11 i.inactive i.binge veges_and_fruit_per_week
 *inactivity, single women, very spiritual, moderately spiritual, very religious
 
 
@@ -253,24 +254,200 @@ regress waist_circum_mean veges_and_fruit_per_week
         regress waist_circum_mean veges_and_fruit_per_week age sbp bmi i.smoke i.diab i.gender i.sbptreat 
 regress waist_circum_mean foodsec
         regress waist_circum_mean foodsec age sbp bmi i.smoke i.diab i.gender i.sbptreat 
+*/
 
-regress frsim10 partage i.gender // R-squared=0.4701; for every 1 yr increase in age, CVD risk increases by 1.05 percentage points (95%CI 1.00-1.10); CVD risk is 9.44 pp lower in women vs men (-10.4, -8.5)
-regress frsim10 partage i.gender hood_score // R-squared=0.4725; neighborhood characteristics not assoc. with CVD risk
-regress frsim10 partage i.gender i.percsafe  // R-squared=0.4703; neighborhood characteristics not assoc. with CVD risk
-regress frsim10 partage i.gender i.race // R-squared=0.4713; compared with white people, CVD risk is on average 3.7 pp higher in East Indian people (1.2, 6.2) 
-regress frsim10 partage i.gender i.occ // R-squared=0.4590; compared with professionals, CVD risk is on average 2.2 pp higher in non-professionals (0.80, 3.77)
-regress frsim10 partage i.gender i.D10 // R-squared=0.4724; compared with non-transsexual or transgender people, CVD risk is on average 2.86 pp higher in gender non-conforming people (6.58, 19.76)
-regress frsim10 partage i.gender i.religious // R-squared=0.4759. Religiousness not assoc with CVD risk
-regress frsim10 partage i.gender i.spirit // R-squared=0.4737. Spirituality not assoc with CVD risk
-regress frsim10 partage i.gender i.D16 // R-squared=0.4783. Compared with those who never attend religious ceremonies, CVD risk is on average 2.21 pp lower in people who attend more than once per week (-3.66, -0.78)
-regress frsim10 partage i.gender i.educ // R-squared=0.4803. College degree: -4.57 (-5.84, -3.30), vs less than high school
-regress frsim10 partage i.gender D7 // R-squared=0.4703. Self-rated income not assoc with CVD risk
-regress frsim10 partage i.gender promis // R-squared=0.4735. Unit increase in social support scale: -0.82 change in CVD risk (-1.51, -0.13)
-regress frsim10 partage i.gender emotion // R-squared=0.4701. Emotional support not assoc with CVD risk
-regress frsim10 partage i.gender i.D12 // R-squared=0.4755. Relationship status not assoc with CVD risk
-regress frsim10 partage i.gender i.SE25 // R-squared=0.4718. Experience of violence from partner not assoc with CVD risk
-regress frsim10 partage i.gender i.SE26 // R-squared=0.4712. Experience of violence from someone other than partner not assoc with CVD risk
-regress frsim10 partage i.gender i.D11 // R-squared=0.4794. Compared with heterosexuals, people who were not sure or questioning sexuality had an increased CVD of 5.16 pp on average (no difference for gay, lesbian or bisexual)
+**Social determinants of CVD risk with different scores
+*framingham simplified
+regress frsim10 hood_score age gender
+regress frsim10 i.percsafe age gender
+regress frsim10 i.race age gender 
+regress frsim10 i.occ age gender
+        tab D10
+        codebook D10
+                gen trans=.
+                replace trans=0 if D10==0
+                replace trans=1 if D10==2 | D10==3
+regress frsim10 i.trans age gender
+tab religious
+regress frsim10 i.religious age gender
+regress frsim10 i.spirit age gender
+tab D16
+codebook D16
+regress frsim10 D16 age gender
+                gen relfreq=.
+                replace relfreq=1 if D16==1 | D16==2
+                replace relfreq=2 if D16==3 | D16==4
+                replace relfreq=3 if D16==5 | D16==6
+regress frsim10 i.relfreq age gender
+regress frsim10 i.educ age gender
+tab D7
+regress frsim10 D7 age gender
+regress frsim10 promis age gender
+regress frsim10 emotion age gender
+regress frsim10 i.D12 age gender
+codebook D12
+                gen relstat=.
+                replace relstat=1 if D12==1 | D12==2
+                replace relstat=2 if D12==3
+                replace relstat=3 if D12==4
+                replace relstat=4 if D12==5 | D12==6
+                replace relstat=5 if D12==7 | relstat==8
+                replace relstat=6 if D12==9
+regress frsim10 i.relstat age gender 
+tab SE25
+regress frsim10 i.SE25 age gender
+regress frsim10 i.SE26 age gender
+regress frsim10 i.D11 age gender
 
-regress frsim10 partage i.gender hood_score i.race i.occ i.D10 i.religious i.spirit i.D16 i.educ D7 promis emotion i.D12 i.SE25 i.SE26 i.D11 // R-squared=0.4892. The only variable whose association with CVD risk remains is education
-regress frsim10 partage i.gender hood_score i.race i.occ i.D10 i.religious i.spirit i.D16 i.educ D7 promis emotion i.D12 i.SE25 i.SE26 i.D11 i.inactive i.binge veges_and_fruit_per_week
+regress frsim10 age i.gender hood_score i.race i.occ i.trans i.religious i.relfreq i.educ D7 promis emotion i.relstat i.SE25 i.SE26 i.D11  
+
+*framingham general 
+regress frrisk10 age gender
+regress frrisk10 hood_score age gender
+regress frrisk10 i.percsafe age gender
+regress frrisk10 i.race age gender 
+regress frrisk10 i.occ age gender
+regress frrisk10 i.trans age gender
+regress frrisk10 i.religious age gender
+regress frrisk10 i.spirit age gender
+regress frrisk10 i.relfreq age gender
+regress frrisk10 i.educ age gender
+regress frrisk10 D7 age gender
+regress frrisk10 promis age gender
+regress frrisk10 emotion age gender
+regress frrisk10 i.relstat age gender 
+regress frrisk10 i.SE25 age gender
+regress frrisk10 i.SE26 age gender
+regress frrisk10 i.D11 age gender
+
+regress frrisk10 age i.gender hood_score i.race i.occ i.trans i.religious i.relfreq i.educ D7 promis emotion i.relstat i.SE25 i.SE26 i.D11
+
+
+
+*AHA/ASCVD 
+regress ascvd10 age gender
+regress ascvd10 hood_score age gender
+regress ascvd10 i.percsafe age gender
+regress ascvd10 i.race age gender 
+regress ascvd10 i.occ age gender
+regress ascvd10 i.trans age gender
+regress ascvd10 i.religious age gender
+regress ascvd10 i.spirit age gender
+regress ascvd10 i.relfreq age gender
+regress ascvd10 i.educ age gender
+regress ascvd10 D7 age gender
+regress ascvd10 promis age gender
+regress ascvd10 emotion age gender
+regress ascvd10 i.relstat age gender 
+regress ascvd10 i.SE25 age gender
+regress ascvd10 i.SE26 age gender
+regress ascvd10 i.D11 age gender
+regress ascvd10 age i.gender hood_score i.race i.occ i.trans i.religious i.relfreq i.educ D7 promis emotion i.relstat i.SE25 i.SE26 i.D11
+
+
+
+*WHO general 
+regress WHO_gen age gender
+regress WHO_gen hood_score age gender
+regress WHO_gen i.percsafe age gender
+regress WHO_gen i.race age gender 
+regress WHO_gen i.occ age gender
+regress WHO_gen i.trans age gender
+regress WHO_gen i.religious age gender
+regress WHO_gen i.spirit age gender
+regress WHO_gen i.relfreq age gender
+regress WHO_gen i.educ age gender
+regress WHO_gen D7 age gender
+regress WHO_gen promis age gender
+regress WHO_gen emotion age gender
+regress WHO_gen i.relstat age gender 
+regress WHO_gen i.SE25 age gender
+regress WHO_gen i.SE26 age gender
+regress WHO_gen i.D11 age gender
+regress WHO_gen age i.gender hood_score i.race i.occ i.trans i.religious i.relfreq i.educ D7 promis emotion i.relstat i.SE25 i.SE26 i.D11
+
+
+*WHO simplified 
+regress WHO_nolab age gender
+regress WHO_nolab hood_score age gender
+regress WHO_nolab i.percsafe age gender
+regress WHO_nolab i.race age gender 
+regress WHO_nolab i.occ age gender
+regress WHO_nolab i.trans age gender
+regress WHO_nolab i.religious age gender
+regress WHO_nolab i.spirit age gender
+regress WHO_nolab i.relfreq age gender
+regress WHO_nolab i.educ age gender
+regress WHO_nolab D7 age gender
+regress WHO_nolab promis age gender
+regress WHO_nolab emotion age gender
+regress WHO_nolab i.relstat age gender 
+regress WHO_nolab i.SE25 age gender
+regress WHO_nolab i.SE26 age gender
+regress WHO_nolab i.D11 age gender
+regress WHO_nolab age i.gender hood_score i.race i.occ i.trans i.religious i.relfreq i.educ D7 promis emotion i.relstat i.SE25 i.SE26 i.D11
+
+/*
+
+** High risk characteristics
+*fram gen
+logistic frcat_high age gender hood_score race occ trans religious relfreq educ D7 promis emotion relstat SE25 SE26 D11 foodsec
+estat gof
+logistic frcat_high age gender hood_score race trans religious relfreq educ D7 promis emotion relstat SE25 SE26 D11
+estat gof
+logistic frcat_high age gender race trans religious relfreq educ D7 promis emotion relstat SE25 SE26 D11
+estat gof
+logistic frcat_high age gender race trans religious relfreq educ promis emotion relstat SE25 SE26 D11
+logistic frcat_high age gender race religious relfreq educ promis emotion relstat SE25 SE26 D11
+logistic frcat_high age gender race relfreq educ promis emotion relstat SE25 SE26 D11
+logistic frcat_high age gender race relfreq educ promis emotion relstat SE25 D11
+logistic frcat_high age gender race relfreq educ emotion relstat SE25 D11
+
+logistic frcat_high age gender race relfreq educ relstat SE25 D11
+
+logistic frcat_high age gender race relfreq educ relstat D11
+
+logistic frcat_high age gender relfreq educ relstat D11
+
+logistic frcat_high age gender relfreq relstat D11
+
+logistic frcat_high age gender relstat D11
+
+
+
+*fram sim
+
+logistic frsimcat_high age gender hood_score race occ trans religious relfreq educ D7 promis emotion relstat SE25 SE26 D11
+
+logistic frsimcat_high age gender hood_score race occ trans religious relfreq educ promis emotion relstat SE25 SE26 D11
+
+logistic frsimcat_high age gender hood_score race occ trans religious relfreq educ promis emotion SE25 SE26 D11
+
+logistic frsimcat_high age gender hood_score race trans religious relfreq educ promis emotion SE25 SE26 D11
+
+logistic frsimcat_high age gender hood_score race religious relfreq educ D11
+
+logistic frsimcat_high age gender relfreq educ D11
+
+logistic frsimcat_high age gender educ D11
+
+logistic frsimcat_high age gender D11
+
+logistic frsimcat_high age gender
+
+**ASCVD
+logistic ascvd_cat_high age gender hood_score race occ trans religious relfreq educ D7 promis emotion relstat SE25 SE26 D11
+
+logistic ascvd_cat_high age gender hood_score race occ trans relfreq educ D7 promis emotion relstat SE25 SE26 D11
+
+logistic ascvd_cat_high age gender race occ trans relfreq educ D7 promis emotion relstat SE25 SE26 D11
+
+logistic ascvd_cat_high age gender race occ relfreq educ D7 promis emotion relstat SE25 SE26 D11
+
+
+
+logistic ascvd_cat_high age gender race occ trans relfreq educ promis emotion relstat SE25 SE26 D11
+
+
+**WHO gen
+logistic WHOgen_cat_high age gender hood_score race occ trans religious relfreq educ D7 promis emotion relstat SE25 SE26 D11
