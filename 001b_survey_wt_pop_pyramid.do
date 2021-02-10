@@ -29,10 +29,10 @@ set linesize 150
 *local datapath "X:/The University of the West Indies/DataGroup - repo_data/data_p120"
 
 *WINDOWS OS (Alternative - Kern; Stephanie)
-*local datapath "X:/The UWI - Cave Hill Campus/DataGroup - repo_data/data_p120"
+local datapath "X:/The UWI - Cave Hill Campus/DataGroup - repo_data/data_p120"
 
 *MAC OS 
-local datapath "/Volumes/Secomba/kernrocke/Boxcryptor/DataGroup - repo_data/data_p120"
+*local datapath "/Volumes/Secomba/kernrocke/Boxcryptor/DataGroup - repo_data/data_p120"
 
 *-------------------------------------------------------------------------------
 
@@ -44,10 +44,12 @@ This do file will do the following
 */
 
 *US Census Population Estimates for Trinidad, Barbados, Puerto Rico, USVI (IDB estimates)
-{
+
 *-------------------------------------------------------------------------------
 *Barbados
 import delimited "`datapath'/version02/1-input/BB_US.csv", clear
+
+rename ïagegroupyearsofage agegroupyearsofage
 
 gen age = real(regexs(1)) if regexm(agegroupyearsofage,"([0-9]+)")
 drop agegroupyearsofage
@@ -82,6 +84,8 @@ save "`datapath'/version02/1-input/BB_US.dta", replace
 *Trinidad
 import delimited "`datapath'/version02/1-input/TT_US.csv", clear
 
+rename ïagegroupyearsofage agegroupyearsofage
+
 gen age = real(regexs(1)) if regexm(agegroupyearsofage,"([0-9]+)")
 drop agegroupyearsofage
 gen agegrp = .
@@ -114,6 +118,8 @@ save "`datapath'/version02/1-input/TT_US.dta", replace
 *Puerto Rico
 import delimited "`datapath'/version02/1-input/PR_US.csv", clear
 
+rename ïagegroupyearsofage agegroupyearsofage
+
 gen age = real(regexs(1)) if regexm(agegroupyearsofage,"([0-9]+)")
 drop agegroupyearsofage
 gen agegrp = .
@@ -145,6 +151,8 @@ save "`datapath'/version02/1-input/PR_US.dta", replace
 *-------------------------------------------------------------------------------
 *USVI
 import delimited "`datapath'/version02/1-input/USVI_US.csv", clear
+
+rename ïagegroupyearsofage agegroupyearsofage
 
 gen age = real(regexs(1)) if regexm(agegroupyearsofage,"([0-9]+)")
 drop agegroupyearsofage
@@ -193,17 +201,13 @@ order id
 *Save data
 save "`datapath'/version02/1-input/combine_US.dta", replace
 
-*Clear output and dataset for further output
-cls
-clear
 
-}
 
 
 
 
 *Using WPP code developed by CHowitt
-{
+
 ***************************************************************************************************************************************************
 ** PROPORTIONS OF MEN IN 10 YEAR AGE GROUPS IN B'DOS, T'DAD, USVI, AND PR
 ***************************************************************************************************************************************************
@@ -301,7 +305,7 @@ save "`datapath'/version02/2-working/ECHORN_popprops", replace
 *-------------------------------------------------------------------------------
 
 *Load in Sample ECHORN data for population estimates
-use "`datapath'/version03/2-working/survey_wave1_weighted1.dta", clear
+use "`datapath'/version03/02-working/survey_wave1_weighted.dta" , clear
 
 keep key siteid gender partage agegr
 gen pop = 1
@@ -560,13 +564,10 @@ merge 1:1 id using "`datapath'/version02/1-input/combine_US.dta", nogenerate
 *Remove ID
 drop id
 
-/*
-gen pop_ecs = pop/sp1
-gen weight = pop_us/pop_ecs*/
-}
+
 *-------------------------------------------------------------------------------
 *Creating Unadjusted Population Pyramids for ECHORN Study sites
-{
+
 *USVI
 preserve
 keep if siteid == 1
@@ -788,9 +789,14 @@ replace UScb20102 = -UScb20102*/
 #delimit cr
 
 restore
-}
+
 *-------------------------------------------------------------------------------
 *Survey Weighted Analysis
+
+*Generate post stratification population weights
+*Generate population postratificaition weights
+gen pop_ecs = pop/sp1
+gen weight = pop_us/pop_ecs
 
 *Set dataset as complex survey using previously derived weights
 svyset _n [pweight=weight], vce(linearized) singleunit(missing)
@@ -835,10 +841,10 @@ replace pop_adjust = 76.31678 if cid == 780 & gender == 2 & agegr == 60
 replace pop_adjust = 40.633 if cid == 780 & gender == 1 & agegr == 70
 replace pop_adjust = 60.85918 if cid == 780 & gender == 2 & agegr == 70
 
-
+drop weight pop_ecs
 *-------------------------------------------------------------------------------
 *Creating Survey Weight adjusted Population Pyramids for ECHORN Study sites
-{
+
 *USVI
 preserve
 keep if siteid == 1
@@ -1070,10 +1076,10 @@ replace UScb20102 = -UScb20102*/
 restore
 
 *-------------------------------------------------------------------------------
-}
+
 
 *Combine unadjusted and adjusted graphs
-{
+
 *USVI
 #delimit;
 graph combine USVI_unadjusted USVI_adjusted, 
@@ -1137,7 +1143,7 @@ graph combine TT_unadjusted TT_adjusted,
 
 *Export graph to encrypted location
 graph export "`datapath'/version02/3-output/TT_ECS_pyramid.png", as(png) replace
-}
+
 
 
 *Remove old graphs
