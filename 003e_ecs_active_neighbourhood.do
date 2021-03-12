@@ -6,11 +6,11 @@
 	**	Sub-Project:	Active Commuting and Perceived Neighbourhood
 	**  Analyst:		Kern Rocke
 	**	Date Created:	17/08/2020
-	**	Date Modified:  10/09/2020
+	**	Date Modified:  22/09/2020
 	**  Algorithm Task: Analyzing relationship between perceived neighbourhood and active commuting.
 
     ** General algorithm set-up
-    version 16
+    version 13
     clear all
     macro drop _all
     set more 1
@@ -60,7 +60,7 @@ local outputpath "/Volumes/Secomba/kernrocke/Boxcryptor/DataGroup - repo_data/da
 *-------------------------------------------------------------------------------
 
 *Open log file to store results
-log using "`logpath'/version03/3-output/ecs_active_neighbourhood.log",  replace
+*log using "`logpath'/version03/3-output/ecs_active_neighbourhood.log",  replace
 
 *-------------------------------------------------------------------------------
 
@@ -79,6 +79,15 @@ keep key siteid gender partage educ D7 D96 bp_diastolic bp_systolic///
 	 nolabrisk10 nolabrisk10ca bmi ow ob ob4 percsafe hood_score ///
 	 primary_plus second_plus tertiary prof semi_prof non_prof occ
 	 
+*-------------------------------------------------------------------------------
+*Create hypertnesion variable
+gen htn = .
+replace htn = 0 if bp_diastolic < 90 & bp_systolic < 140
+replace htn = 1 if bp_diastolic >= 90 & bp_systolic >= 140
+label var htn "Hypertension"
+label define htn 0"No" 1"Hypertension"
+label value htn htn
+
 *-------------------------------------------------------------------------------
 
 *Create tertiles for active commuting
@@ -212,22 +221,48 @@ tab TMET_3 ob, chi2 row
 
 * Perceived Neighbourhood Characteristics and Active Commuting
 foreach x of numlist 12 13 14 15 16 17 18 19 20 21 22 23 24 {
-regress TMET i.SE_`x' i.siteid i.gender partage i.educ bmi D96 D7 nolabrisk10, vce(robust) 
+regress TMET i.SE_`x' i.siteid i.gender partage i.educ bmi D96 D7 nolabrisk10 htn ob, vce(robust) 
 }
 
-regress TMET hood_score i.siteid i.gender partage i.educ bmi D96 D7 nolabrisk10 
-regress TMET percsafe  i.siteid i.gender partage i.educ bmi D96 D7 nolabrisk10 
+regress TMET hood_score i.siteid i.gender partage i.educ bmi D96 D7 nolabrisk10 htn ob 
+regress TMET percsafe  i.siteid i.gender partage i.educ bmi D96 D7 nolabrisk10 htn ob
 
 
 **Logistic Regression (Physicaal Inactivity - inactive)
 
 * Perceived Neighbourhood Characteristics and Physical inactivity
 foreach x of numlist 12 13 14 15 16 17 18 19 20 21 22 23 24 {
-logistic inactive i.SE_`x' i.siteid i.gender partage i.educ bmi D96 D7 nolabrisk10, vce(robust) 
+logistic inactive i.SE_`x' i.siteid i.gender partage i.educ bmi D96 D7 nolabrisk10 htn ob, vce(robust) 
 }
 
-logistic inactive hood_score i.siteid i.gender partage i.educ bmi D96 D7 nolabrisk10, vce(robust) 
-logistic inactive percsafe i.siteid i.gender partage i.educ bmi D96 D7 nolabrisk10, vce(robust) 
+logistic inactive hood_score i.siteid i.gender partage i.educ bmi D96 D7 nolabrisk10 htn ob, vce(robust) 
+logistic inactive percsafe i.siteid i.gender partage i.educ bmi D96 D7 nolabrisk10 htn ob, vce(robust) 
+
+*-------------------------------------------------------------------------------
+
+*Regression Models (Table 4)
+
+**Linear & Logistic Regression (Healhth Outcomes and Perceived Neighbour Charactertistics)
+*Obesity
+foreach x of numlist 12 13 14 15 16 17 18 19 20 21 22 23 24 hood_score percsafe {
+logistic ob i.SE_`x' i.siteid i.gender partage i.educ D96 D7, vce(robust) 
+}
+
+
+*Hypertension
+foreach x of numlist 12 13 14 15 16 17 18 19 20 21 22 23 24 hood_score percsafe {
+logistic htn i.SE_`x' i.siteid i.gender partage i.educ D96 D7, vce(robust) 
+}
+
+*Diabetes
+foreach x of numlist 12 13 14 15 16 17 18 19 20 21 22 23 24 hood_score percsafe {
+logistic dia i.SE_`x' i.siteid i.gender partage i.educ D96 D7, vce(robust) 
+}
+
+*CVD Risk
+foreach x of numlist 12 13 14 15 16 17 18 19 20 21 22 23 24 hood_score percsafe {
+regress nolabrisk10 i.SE_`x' i.siteid i.gender partage i.educ D96 D7, vce(robust) 
+}
 
 *-------------------------------------------------------------------------------
 
