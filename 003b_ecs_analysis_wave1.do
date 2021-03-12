@@ -396,3 +396,16 @@ kapci WHOgen_cat_high WHObmi_cat_high
 ** ** TABLE 4: Correlation between mean 10-year risk of different risk algorithms
 ** -------------------------------------------------------------------------------------------------------------------- 
 pwcorr frrisk10 frsim10 WHO_nolab WHO_gen ascvd10
+
+**Participant characteristics
+
+mean partage, over(gender)
+by gender, sort : summarize partage
+by gender, sort : summarize sbp
+by gender, sort : summarize bp_diastolic
+tab sbptreat gender, col
+by gender, sort : summarize bmi
+by gender, sort : summarize tchol
+by gender, sort : summarize hdl
+tab smoke gender, col
+tab diab gender, col

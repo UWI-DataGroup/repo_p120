@@ -1023,4 +1023,11 @@ svy: tab GH184 gender if siteid==2, miss perc col
 svy: tab GH184 gender if siteid==3, miss perc col 
 *Trinidad
 svy: tab GH184 gender if siteid==4, miss perc col 
-svyset, clear
+
+
+
+
+
+
+
+*svyset, clear
