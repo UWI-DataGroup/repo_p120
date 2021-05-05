@@ -597,7 +597,7 @@ replace mpdT=.a if HB12>16 & HB12<. & HB11==1 // according to GPAQ instructions,
 codebook mpdT 
 
 *Calculating min per week for active transport
-gen mpwT=mpdMW*HB10 
+gen mpwT=mpdT*HB10 
 replace mpwT=.z if HB10==.z 
 
 *Calculating MET-min per week for active transport (assuming MET value of 4 for active transport)
@@ -1023,6 +1023,7 @@ svy: tab GH184 gender if siteid==2, miss perc col
 svy: tab GH184 gender if siteid==3, miss perc col 
 *Trinidad
 svy: tab GH184 gender if siteid==4, miss perc col 
+<<<<<<< Updated upstream
 
 
 
@@ -1031,3 +1032,6 @@ svy: tab GH184 gender if siteid==4, miss perc col
 
 
 *svyset, clear
+=======
+svyset, clear
+>>>>>>> Stashed changes
