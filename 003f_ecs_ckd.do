@@ -6,7 +6,7 @@ cls
 	**	Sub-Project:	Chronic Kidney Disease
 	**  Analyst:		Kern Rocke
 	**	Date Created:	03/05/2021
-	**	Date Modified:  11/05/2021
+	**	Date Modified:  18/05/2021
 	**  Algorithm Task: Creating CKD variables for analysis
 
     ** General algorithm set-up
@@ -349,3 +349,24 @@ graph bar (mean) ckd_male ckd_female ckd [pweight = svy_weight] ,
 oneway ckd siteid, tab
 pwmean ckd, over(siteid) mcompare(tukey) effects cimeans
 restore
+*-------------------------------------------------------------------------------
+
+*Regression Modelling
+
+**Unadjusted
+regress egfr ascvd10 [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
+regress egfr ascvd_cat [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
+
+logistic ckd ascvd10 [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
+logistic ckd ascvd10_cat [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
+
+*Adjusted
+regress egfr ascvd10 i.gender partage bmi i.educ htn diab_hba1c i.MET_grp i.HB24  [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
+regress egfr ascvd_cat i.gender partage bmi i.educ htn diab_hba1c i.MET_grp i.HB24  [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
+
+logistic ckd ascvd10 i.gender partage bmi i.educ htn diab_hba1c i.MET_grp i.HB24  [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
+logistic ckd ascvd_cat i.gender partage bmi i.educ htn diab_hba1c i.MET_grp i.HB24  [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
+
+*-------------------------------------------------------------------------------
+
+
