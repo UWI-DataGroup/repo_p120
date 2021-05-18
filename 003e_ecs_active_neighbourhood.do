@@ -79,6 +79,17 @@ use "`datapath'/version03/02-working/survey_wave1_weighted.dta", clear
 *Create physical activity variables from GPAQ
 do "`dopath'/p_activity_algorithm.do"
 
+egen id = seq()
+
+*Merge in ECHORN GPAQ analysis
+merge 1:1 key using "`datapath'/version03/01-input/GPAQ_Files_CDRC_041921/gpaq_clean.dta", nogenerate
+merge 1:1 id using "`datapath'/version03/01-input/echorn_walkscore.dta", nogenerate
+sort walkscore
+replace walkscore = "" in 1/1383
+replace walkscore = "" in 2961
+destring walkscore, replace
+sort key
+
 *Merge in CVD risk data
 merge 1:1 key using "`datapath'/version03/02-working/who_reduced.dta", nogenerate
 merge 1:1 key using "`datapath'/version03/02-working/ascvd_reduced.dta", nogenerate
@@ -517,3 +528,157 @@ cls
 logistic inactive social_cohesion walk_score i.gender partage htn dia D96 bmi i.educ i.residential i.siteid,  vce(cluster siteid) nolog cformat(%9.3f)
 logistic inactive disorder walk_score i.gender partage htn dia D96 bmi i.educ i.residential i.siteid,  vce(cluster siteid) nolog cformat(%9.3f)
 logistic inactive violence walk_score i.gender partage htn dia D96 bmi i.educ i.residential i.siteid,  vce(cluster siteid) nolog cformat(%9.3f)
+
+
+
+
+** HEADER -----------------------------------------------------
+	**  DO-FILE METADATA
+	**  Program:		ecs_active_neighbourhood.do
+	**  Project:      	Pediatric ECHORN (P-ECS)
+	**	Sub-Project:	Active Commuting and Perceived Neighbourhood
+	**  Analyst:		Kern Rocke
+	**	Date Created:	17/08/2020
+	**	Date Modified:  22/09/2020
+	**  Algorithm Task: Analyzing relationship between perceived neighbourhood and active commuting.
+
+    ** General algorithm set-up
+    version 13
+    clear all
+    macro drop _all
+    set more 1
+    set linesize 80
+
+
+*Setting working directory (Choose the appropriate one for your system)
+
+*-------------------------------------------------------------------------------
+** Dataset to encrypted location
+
+*WINDOWS OS - Ian & Christina (Data Group)
+*local datapath "X:/The University of the West Indies/DataGroup - repo_data/data_p120"
+
+*WINDOWS OS - Kern & Stephanie
+*local datapath "X:/The UWI - Cave Hill Campus/DataGroup - repo_data/data_p120"
+
+*MAC OS - Kern
+local datapath "/Volumes/Secomba/kernrocke/Boxcryptor/The University of the West Indies/DataGroup - data_p120"
+
+*-------------------------------------------------------------------------------
+
+** Logfiles to unencrypted location
+
+*WINDOWS OS - Ian & Christina (Data Group)
+*local logpath "X:/The University of the West Indies/DataGroup - repo_data/data_p120"
+
+*WINDOWS OS - Kern & Stephanie
+*local logpath "X:/The UWI - Cave Hill Campus/DataGroup - repo_data/data_p120"
+
+*MAC OS - Kern
+local logpath "/Volumes/Secomba/kernrocke/Boxcryptor/The University of the West Indies/DataGroup - data_p120"
+
+*-------------------------------------------------------------------------------
+
+**Aggregated output path
+
+*WINDOWS OS - Ian & Christina (Data Group) 
+*local outputpath "The University of the West Indies/DataGroup - PROJECT_p120"
+
+*WINDOWS OS - Kern & Stephanie
+*local outputpath "X:/The UWI - Cave Hill Campus/DataGroup - PROJECT_p120"
+
+*MAC OS - Kern
+local outputpath "/Volumes/Secomba/kernrocke/Boxcryptor/The University of the West Indies/DataGroup - data_p120"	
+	
+*-------------------------------------------------------------------------------
+
+**Do file path
+
+local dopath "/Volumes/Secomba/kernrocke/Boxcryptor/OneDrive - The UWI - Cave Hill Campus/Github Repositories/repo_p120"
+
+** PhD path
+local phdpath "/Volumes/Secomba/kernrocke/Boxcryptor/The University of the West Indies/DataGroup - data_p145"
+
+*Open log file to store results
+*log using "`logpath'/version03/3-output/ecs_active_neighbourhood.log",  replace
+
+*-------------------------------------------------------------------------------
+
+*Load in data from encrypted location
+use "`datapath'/version03/02-working/survey_wave1_weighted.dta", clear
+	
+*-------------------------------------------------------------------------------
+
+*Create physical activity variables from GPAQ
+do "`dopath'/p_activity_algorithm.do"
+
+egen id = seq()
+
+*Merge in ECHORN GPAQ analysis
+merge 1:1 key using "`datapath'/version03/01-input/GPAQ_Files_CDRC_041921/gpaq_clean.dta", nogenerate
+merge 1:1 id using "`datapath'/version03/01-input/echorn_walkscore.dta", nogenerate
+sort walkscore
+replace walkscore = "" in 1/1383
+replace walkscore = "" in 2961
+destring walkscore, replace
+sort key
+
+gen bmi = weight/((height/100)^2)
+
+ssc install vreverse, replace
+vreverse SE14, gen(SE14_reverse)
+vreverse SE16, gen(SE16_reverse)
+egen social_cohesion = rowtotal(SE12 SE13 SE14_reverse SE15 SE16_reverse SE17)
+replace social_cohesion = . if SE12==. & SE13==. & SE14_reverse==. & SE15==. & SE16_reverse==. & SE17==.
+
+
+egen violence = rowtotal(SE21 SE22 SE23 SE24)
+replace violence =. if SE21==. & SE22==. & SE23==. & SE24==.
+egen disorder =rowtotal(SE18 SE19 SE20)
+replace disorder =. if SE18==. & SE19==. & SE20==. 
+
+gen car = .
+replace car = 1 if D96 == 0
+replace car = 0 if D96>0 & D96 !=.
+
+gen dia = . 
+replace dia = 1 if glucose >=126 & glucose !=.
+replace dia = 0 if glucose<126
+replace dia = 1 if Diabetes == 1
+replace dia = 0 if Diabetes == 0
+
+gen htn = .
+replace htn = 0 if bp_diastolic < 90 | bp_systolic < 140
+replace htn = 1 if bp_diastolic >= 90 & bp_systolic >= 140 & bp_diastolic !=. & bp_systolic!=.
+replace htn = 1 if Hypertension == 1
+
+
+label var htn "Hypertension"
+label define htn 0"No" 1"Hypertension"
+label value htn htn
+
+gen obese = .
+replace obese = 1 if bmi>=30 & bmi!=.
+replace obese = 0 if bmi<30
+
+gen residential = .
+replace residential = 1 if D75 == 0 
+replace residential = 2 if D75 == 1
+replace residential = 3 if D75 == 2 | D75 == 3 | D75 == 4
+
+gen educ=.
+replace educ=1 if D13==0 | D13==1 | D13==2
+replace educ=2 if D13==3
+replace educ=3 if D13==4 | D13==5
+replace educ=4 if D13==6 | D13==7 | D13==8 | D13==9
+label variable educ "Education categories"
+label define educ 1 "less than high school" 2 "high school graduate" 3 "associates degree/some college" 4 "college degree"
+label values educ educ 
+
+
+gen walk_wk = p9*p8
+cls
+*Model 2 - Adjusting for Model 1, country site and neighbourhood walkability
+nbreg walk_wk social_cohesion c.walkscore##car gender partage i.siteid bmi, irr vce(cluster siteid) nolog cformat(%9.3f)
+nbreg walk_wk disorder c.walkscore##car gender partage i.siteid bmi, irr vce(cluster siteid) nolog cformat(%9.3f)
+nbreg walk_wk violence c.walkscore##car gender partage i.siteid bmi, irr vce(cluster siteid) nolog cformat(%9.3f)

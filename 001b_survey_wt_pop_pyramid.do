@@ -29,10 +29,10 @@ set linesize 150
 *local datapath "X:/The University of the West Indies/DataGroup - repo_data/data_p120"
 
 *WINDOWS OS (Alternative - Kern; Stephanie)
-local datapath "X:/The UWI - Cave Hill Campus/DataGroup - repo_data/data_p120"
+*local datapath "X:/The UWI - Cave Hill Campus/DataGroup - repo_data/data_p120"
 
 *MAC OS 
-*local datapath "/Volumes/Secomba/kernrocke/Boxcryptor/DataGroup - repo_data/data_p120"
+local datapath "/Volumes/Secomba/kernrocke/Boxcryptor/The University of the West Indies/DataGroup - data_p120"
 
 *-------------------------------------------------------------------------------
 
@@ -797,6 +797,13 @@ restore
 *Generate population postratificaition weights
 gen pop_ecs = pop/sp1
 gen weight = pop_us/pop_ecs
+
+preserve
+keep weight siteid agegr gender
+sort siteid gender agegr
+*Save dataset
+save "`datapath'/version02/1-input/ECS_weights.dta", replace
+restore
 
 *Set dataset as complex survey using previously derived weights
 svyset _n [pweight=weight], vce(linearized) singleunit(missing)

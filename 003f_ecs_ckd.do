@@ -6,7 +6,7 @@ cls
 	**	Sub-Project:	Chronic Kidney Disease
 	**  Analyst:		Kern Rocke
 	**	Date Created:	03/05/2021
-	**	Date Modified:  04/05/2021
+	**	Date Modified:  11/05/2021
 	**  Algorithm Task: Creating CKD variables for analysis
 
     ** General algorithm set-up
@@ -225,3 +225,127 @@ Table 3- Logistic Regression of CKD and cardiovascular predictors
 */
 *-------------------------------------------------------------------------------
 
+*Glomerular Hyperfiltration - Possible second paper or can be merged with the current paper
+
+bysort gender agegr : egen p95 = pctile(egfr), p(95)
+bysort gender agegr : sum p95
+
+gen hyper_filt = . 
+replace hyper_filt = 1 if egfr>=133.6176 & gender == 1 & agegr== 1 & egfr!=.
+replace hyper_filt = 1 if egfr>=125.8737 & gender == 1 & agegr== 2 & egfr!=.
+replace hyper_filt = 1 if egfr>=114.4846 & gender == 1 & agegr== 3 & egfr!=.
+replace hyper_filt = 1 if egfr>=108.2284 & gender == 1 & agegr== 4 & egfr!=.
+
+
+replace hyper_filt = 1 if egfr>=136.1292 & gender == 2 & agegr== 1 & egfr!=.
+replace hyper_filt = 1 if egfr>=126.0065 & gender == 2 & agegr== 2 & egfr!=.
+replace hyper_filt = 1 if egfr>=120.806 & gender == 2 & agegr== 3 & egfr!=.
+replace hyper_filt = 1 if egfr>=111.8227 & gender == 2 & agegr== 4 & egfr!=.
+
+replace hyper_filt = 0 if hyper_filt == . & egfr !=.
+replace hyper_filt = . if hyper_filt == . & egfr == .
+
+label var hyper_filt "Glomerular Hyperfiltration"
+label define hyper_filt 0"Normal" 1"Hyperfiltration"
+label value hyper_filt hyper_filt
+
+proportion hyper_filt [pweight = svy_weight], percent
+proportion hyper_filt [pweight = svy_weight], over(siteid) percent
+
+melogit hyper_filt ascvd10 || siteid:, nolog or
+melogit hyper_filt i.ascvd_cat || siteid:, nolog or
+
+
+*Diabetes
+gen diab = .
+replace diab = 0 if glucose <100
+replace diab = 1 if glucose >=100 & glucose<126
+replace diab = 2 if glucose >=126 & glucose!=.
+label var diab "Diabetes (Glucose mg/dL)"
+label define diab 0"Normal" 1"Pre-Diabetes" 2"Diabetes"
+label value diab diab
+
+gen diab_hba1c = .
+replace diab_hba1c = 0 if HBA1C <6.0
+replace diab_hba1c = 1 if HBA1C >=6.0 & HBA1C<6.5
+replace diab_hba1c = 2 if HBA1C >=6.5 & HBA1C!=.
+replace diab_hba1c = 2 if Diabetes == 1
+label var diab_hba1c "Diabetes (HBA1C %)"
+label define diab_hba1c 0"Normal" 1"Pre-Diabetes" 2"Diabetes"
+label value diab_hba1c diab_hba1c
+
+melogit hyper_filt i.diab i.ascvd_cat || siteid:, nolog or
+melogit hyper_filt i.diab_hba1c i.ascvd_cat || siteid:, nolog or
+
+*Hypertension
+gen htn = .
+replace htn = 0 if bp_diastolic < 90 | bp_systolic < 140
+replace htn = 1 if bp_diastolic >= 90 & bp_systolic >= 140 & bp_diastolic !=. & bp_systolic!=.
+replace htn = 1 if Hypertension == 1
+label var htn "Hypertension"
+label define htn 0"No" 1"Hypertension"
+label value htn htn
+
+*Renal Functio Categories
+gen renal_cat = .
+replace renal_cat = 1 if ckd==1
+replace renal_cat = 2 if hyper_filt==1
+replace renal_cat = 0 if hyper_filt ==0 & ckd == 0
+tab renal_cat
+label var renal_cat "Renal Function Categories"
+label define renal_cat 0"Normal" 1"CKD" 2"Hyperfiltration"
+label value renal_cat renal_cat
+
+*Education Variable
+gen educ=.
+replace educ=1 if D13==0 | D13==1 | D13==2
+replace educ=2 if D13==3
+replace educ=3 if D13==4 | D13==5
+replace educ=4 if D13==6 | D13==7 | D13==8 | D13==9
+label variable educ "Education categories"
+label define educ 1 "less than high school" 2 "high school graduate" 3 "associates degree/some college" 4 "college degree"
+label values educ educ 
+
+
+
+*CKD Prevalence Graph
+
+preserve
+replace ckd=ckd*100
+
+gen ckd_male = ckd if gender==1
+gen ckd_female = ckd if gender==2
+
+#delimit;
+graph bar (mean) ckd_male ckd_female ckd [pweight = svy_weight] , 
+
+	over(siteid) blabel(bar, format(%9.2f)) 
+	
+	ylab(0(2)14, angle(verticle) nogrid)
+	
+	bar(1, fcolor(blue) fintensity(inten70) lcolor(black)) 
+	bar(2, fcolor(red) fintensity(inten70) lcolor(black))
+	bar(3, fcolor(green) fintensity(inten70) lcolor(black))
+	
+	bargap(10)
+	
+	ytitle("Prevalence (%)", color(black) size(medsmall))
+	
+	legend(order(1 "Male" 2 "Female" 3 "Both") 
+			row(1) region(fcolor(gs16) lw(vthin) margin(l=2 r=2 t=2 b=2))
+			)
+	
+	 plotregion(c(gs16) ic(gs16) ilw(thin) lw(thin)) 
+     graphregion(color(gs16) ic(gs16) ilw(thin) lw(thin)) 
+     bgcolor(white) 
+	
+	caption("Estimates are Survey Weight Adjusted", color(black) size(small))
+	
+	name(CKD_country, replace)
+	;
+#delimit cr
+
+*Examining differences in prevalence estimates by country
+oneway ckd siteid, tab
+pwmean ckd, over(siteid) mcompare(tukey) effects cimeans
+restore
