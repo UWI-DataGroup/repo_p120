@@ -6,7 +6,7 @@ cls
 	**	Sub-Project:	Chronic Kidney Disease
 	**  Analyst:		Kern Rocke
 	**	Date Created:	03/05/2021
-	**	Date Modified:  18/05/2021
+	**	Date Modified:  26/05/2021
 	**  Algorithm Task: Creating CKD variables for analysis
 
     ** General algorithm set-up
