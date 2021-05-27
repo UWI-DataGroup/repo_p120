@@ -122,10 +122,10 @@ label var micro "Microalbuminuria"
 label define micro 0"Normal" 1"Microalbuminuria"
 label value micro micro
 
-*Chronic Kideny Disease
+*Chronic Kideny Disease (Albuminuria removed)
 gen ckd =. 
 replace ckd = 0 if low_renal == 0 
-replace ckd = 1 if low_renal == 1 | micro == 1
+replace ckd = 1 if low_renal == 1 
 label var ckd "Chronic Kidney Disease"
 label define ckd 0"Normal" 1"CKD"
 label value ckd ckd
@@ -321,7 +321,7 @@ graph bar (mean) ckd_male ckd_female ckd [pweight = svy_weight] ,
 
 	over(siteid) blabel(bar, format(%9.2f)) 
 	
-	ylab(0(2)14, angle(verticle) nogrid)
+	ylab(0(2)12, angle(verticle) nogrid)
 	
 	bar(1, fcolor(blue) fintensity(inten70) lcolor(black)) 
 	bar(2, fcolor(red) fintensity(inten70) lcolor(black))
@@ -358,7 +358,7 @@ regress egfr ascvd10 [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
 regress egfr ascvd_cat [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
 
 logistic ckd ascvd10 [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
-logistic ckd ascvd10_cat [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
+logistic ckd ascvd_cat [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
 
 *Adjusted
 regress egfr ascvd10 i.gender partage bmi i.educ htn diab_hba1c i.MET_grp i.HB24  [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
