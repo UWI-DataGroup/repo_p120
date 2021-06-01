@@ -6,7 +6,7 @@ cls
 	**	Sub-Project:	Chronic Kidney Disease
 	**  Analyst:		Kern Rocke
 	**	Date Created:	03/05/2021
-	**	Date Modified:  26/05/2021
+	**	Date Modified:  31/05/2021
 	**  Algorithm Task: Creating CKD variables for analysis
 
     ** General algorithm set-up
@@ -81,6 +81,7 @@ merge 1:1 key using "`datapath'/version03/01-input/cdrc_ckd.dta", nogenerate
 
 *Remove participants with missing creatinine information
 keep if creatinine != .
+
 
 
 *Create eGFR using CKD-EPI equation
@@ -317,7 +318,7 @@ gen ckd_male = ckd if gender==1
 gen ckd_female = ckd if gender==2
 
 #delimit;
-graph bar (mean) ckd_male ckd_female ckd [pweight = svy_weight] , 
+graph bar (mean) ckd_male ckd_female ckd [pweight = svy_weight], 
 
 	over(siteid) blabel(bar, format(%9.2f)) 
 	
@@ -355,18 +356,46 @@ restore
 
 **Unadjusted
 regress egfr ascvd10 [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
-regress egfr ascvd_cat [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
+regress egfr i.ascvd_cat [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
 
 logistic ckd ascvd10 [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
-logistic ckd ascvd_cat [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
+logistic ckd i.ascvd_cat [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
 
 *Adjusted
 regress egfr ascvd10 i.gender partage bmi i.educ htn diab_hba1c i.MET_grp i.HB24  [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
-regress egfr ascvd_cat i.gender partage bmi i.educ htn diab_hba1c i.MET_grp i.HB24  [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
+regress egfr i.ascvd_cat i.gender partage bmi i.educ htn diab_hba1c i.MET_grp i.HB24  [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
 
 logistic ckd ascvd10 i.gender partage bmi i.educ htn diab_hba1c i.MET_grp i.HB24  [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
-logistic ckd ascvd_cat i.gender partage bmi i.educ htn diab_hba1c i.MET_grp i.HB24  [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
+logistic ckd i.ascvd_cat i.gender partage bmi i.educ htn diab_hba1c i.MET_grp i.HB24  [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
 
 *-------------------------------------------------------------------------------
+
+
+*Examine differences in serum creatinine between methods
+***Note: Differences are done by country because no Point of Care measurements were done for Puerto Rico
+
+tab method siteid
+
+*USVI
+ttest creatinine if site==1, by(method)
+*Barbados
+ttest creatinine if site==3, by(method)
+*Trinidad
+ttest creatinine if site==4, by(method)
+
+
+/*No significant diffrences between creatinine method type (labortory vs Point of Care) by country
+
+Note: Re-run regression models by method type for senstivity analysis
+*/
+
+
+*Senstivity Analysis Regression models
+*Lab Creatinine
+logistic ckd i.ascvd_cat i.gender partage bmi i.educ htn diab_hba1c i.MET_grp i.HB24  [pw=svy_weight] if method ==1, vce(cluster siteid) cformat(%9.2f)
+*Point of Care Creatinine
+logistic ckd i.ascvd_cat i.gender partage bmi i.educ htn diab_hba1c i.MET_grp i.HB24  [pw=svy_weight] if method ==2, vce(cluster siteid) cformat(%9.2f)
+
+
 
 
