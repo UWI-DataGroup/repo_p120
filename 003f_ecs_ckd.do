@@ -82,27 +82,51 @@ merge 1:1 key using "`datapath'/version03/01-input/cdrc_ckd.dta", nogenerate
 *Remove participants with missing creatinine information
 keep if creatinine != .
 
+*Create ethnicity variable
+gen race = .
+replace race = 1 if D4A==1 // white
+replace race = 2 if D4B==1 // black
+replace race = 2 if D4C==1 // caribbean
+replace race = 3 if D4D==1 // asian
+replace race = 4 if D4E==1 // east indian
+replace race = 5 if D4F==1 // hispanic
+replace race = 6 if D4G==1 // mixed
+replace race = 7 if D4H==1 // other race 
+replace race = 5 if D4I==1 // puerto rican
+
+label var race "Ethnicity"
+label define race 1"White" 2"Black/Caribbean" 3"Asian" 4"East Indian" 5"Hispanic" 6"Mixed" 7"Other"
+label value race race
+
 
 
 *Create eGFR using CKD-EPI equation
+*Black ehtnicity
 gen egfr = . 
-replace egfr = 163*(creatinine /0.9)^-1.209*(0.993)^partage if gender==1 & creatinine >0.9 & creatinine !=.
-replace egfr = 163*(creatinine /0.9)^-0.411*(0.993)^partage if gender==1 & creatinine <=0.9 & creatinine !=.
-replace egfr = 166*(creatinine /0.7)^-1.209*(0.993)^partage if gender==2 & creatinine >0.7 & creatinine !=.
-replace egfr = 166*(creatinine /0.7)^-0.329*(0.993)^partage if gender==2 & creatinine <=0.7 & creatinine !=.
+replace egfr = 163*(creatinine /0.9)^-1.209*(0.993)^partage if gender==1 & creatinine >0.9 & creatinine !=. & race == 2
+replace egfr = 163*(creatinine /0.9)^-0.411*(0.993)^partage if gender==1 & creatinine <=0.9 & creatinine !=. & race == 2
+replace egfr = 166*(creatinine /0.7)^-1.209*(0.993)^partage if gender==2 & creatinine >0.7 & creatinine !=. & race == 2
+replace egfr = 166*(creatinine /0.7)^-0.329*(0.993)^partage if gender==2 & creatinine <=0.7 & creatinine !=. & race == 2
+
+*White or other ethnicity
+replace egfr = 141*(creatinine /0.9)^-1.209*(0.993)^partage if gender==1 & creatinine >0.9 & creatinine !=. & race != 2
+replace egfr = 141*(creatinine /0.9)^-0.411*(0.993)^partage if gender==1 & creatinine <=0.9 & creatinine !=. & race != 2
+replace egfr = 144*(creatinine /0.7)^-1.209*(0.993)^partage if gender==2 & creatinine >0.7 & creatinine !=. & race != 2
+replace egfr = 144*(creatinine /0.7)^-0.329*(0.993)^partage if gender==2 & creatinine <=0.7 & creatinine !=. & race != 2
+
 label var egfr"Estimated Glomerular Filtration Rate"
 
 mean egfr, over(siteid)
 
 
-**MDRD
+/**MDRD
 gen gfr_MDRD=.
 replace gfr_MDRD = 175*(creatinine^-1.154)*partage^-0.203 * 1.210 * 0.742 if gender==2 & creatinine !=.
 replace gfr_MDRD = 175*(creatinine^-1.154)*partage^-0.203 * 1.210  if gender==1 & creatinine !=.
 label var gfr_MDRD "MDRD"
 
 mean gfr_MDRD, over(siteid)
-
+*/
 
 *Low renal function
 gen low_renal = .
