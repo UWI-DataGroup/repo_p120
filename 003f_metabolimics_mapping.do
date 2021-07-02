@@ -1,12 +1,12 @@
 cls
 ** HEADER -----------------------------------------------------
 	**  DO-FILE METADATA
-	**  Program:		metabolimics_mapping.do
+	**  Program:		metabolomics_mapping.do
 	**  Project:      	Pediatric ECHORN (P-ECS)
-	**	Sub-Project:	Metabolics Mapping
+	**	Sub-Project:	Metabolomics Mapping
 	**  Analyst:		Kern Rocke
 	**	Date Created:	30/06/2021
-	**	Date Modified:  30/06/2021
+	**	Date Modified:  02/07/2021
 	**  Algorithm Task: Preparation for Spatial Mapping by Country.
 
     ** General algorithm set-up
