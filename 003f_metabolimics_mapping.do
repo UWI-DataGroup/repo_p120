@@ -30,7 +30,7 @@ cls
 
 *MAC OS - Kern
 local datapath "/Volumes/Secomba/kernrocke/Boxcryptor/The University of the West Indies/DataGroup - data_p120"
-
+local phdpath "/Volumes/Secomba/kernrocke/Boxcryptor/The University of the West Indies/DataGroup - data_p145"
 *-------------------------------------------------------------------------------
 
 ** Logfiles to unencrypted location
@@ -97,7 +97,7 @@ import excel "`datapath'/version03/01-input/GIS Files/Spatial Join/PR_Spatial_Jo
 collapse (mean) ethanolamine - aminoadipic_acid, by(TRACTCE10)
 
 *Export dataset to encrypted location
-export delimited using "`datapath'/version03/01-input/GIS Files/Spatial Join/PR_metabolomics_neighborhood"
+export delimited using "`datapath'/version03/01-input/GIS Files/Spatial Join/PR_metabolomics_neighborhood", replace
 
 *-------------------------------------------------------------------------------
 
@@ -107,15 +107,20 @@ import excel "`datapath'/version03/01-input/GIS Files/Spatial Join/USVI_Spatial_
 collapse (mean) ethanolamine - aminoadipic_acid, by(ESTATEFP)
 
 *Export dataset to encrypted location
-export delimited using "`datapath'/version03/01-input/GIS Files/Spatial Join/USVI_metabolomics_neighborhood"
+export delimited using "`datapath'/version03/01-input/GIS Files/Spatial Join/USVI_metabolomics_neighborhood", replace
 
 *-------------------------------------------------------------------------------
 *Barbados
 import excel "`datapath'/version03/01-input/GIS Files/Spatial Join/BB_Spatial_Join.xlsx", clear firstrow
+sort ED
+destring ED, replace
+merge m:1 ED using "`phdpath'/version01/2-working/Walkability/walkability_paper_001.dta"
 
-collapse (mean) ethanolamine - aminoadipic_acid, by(ED)
+collapse (mean) ethanolamine - aminoadipic_acid, by(parish)
+egen parishid = seq()
+order parishid, before(parish)
 
 *Export dataset to encrypted location
-export delimited using "`datapath'/version03/01-input/GIS Files/Spatial Join/BB_metabolomics_neighborhood"
+export delimited using "`datapath'/version03/01-input/GIS Files/Spatial Join/BB_metabolomics_neighborhood", replace
 
 *-------------------------------------------------------------------------------
