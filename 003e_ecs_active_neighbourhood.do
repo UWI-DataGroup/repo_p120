@@ -6,7 +6,7 @@ cls
 	**	Sub-Project:	Active Commuting and Perceived Neighbourhood
 	**  Analyst:		Kern Rocke
 	**	Date Created:	17/08/2020
-	**	Date Modified:  03/06/2021
+	**	Date Modified:  13/07/2021
 	**  Algorithm Task: Analyzing relationship between perceived neighbourhood and active commuting.
 
     ** General algorithm set-up
@@ -93,23 +93,69 @@ sort key
 
 *Create BMI variable
 gen bmi = weight/((height/100)^2)
+gen under = .
+replace under = 0 if bmi_cat==1
+replace under = 1 if bmi_cat==2
+prtest under if commute_wk!=., by(gender) 
+tab bmi_cat gender if commute_wk!=., chi2
+gen  over= .
+replace over = 0 if bmi_cat==1
+replace over = 1 if bmi_cat==2
+drop over
+gen  over= .
+replace over = 0 if bmi_cat==1
+replace over = 1 if bmi_cat==3
 
 *Perceived Social Environment Scales
 
 *Neighbourhood Social Cohesion
-ssc install vreverse, replace
+*ssc install vreverse, replace
 vreverse SE14, gen(SE14_reverse)
 vreverse SE16, gen(SE16_reverse)
 egen social_cohesion = rowtotal(SE12 SE13 SE14_reverse SE15 SE16_reverse SE17)
 replace social_cohesion = . if SE12==. & SE13==. & SE14_reverse==. & SE15==. & SE16_reverse==. & SE17==.
+label var social_cohesion "Neighborhood Social Cohesion"
+xtile social_cat = social_cohesion, nq(3)
+label var social_cat "Social Cohesion Categories"
+label define social_cat 1"Low" 2"Medium" 3"High"
+label value social_cat social_cat
 
 *Neighbourhood Violence
 egen violence = rowtotal(SE21 SE22 SE23 SE24)
 replace violence =. if SE21==. & SE22==. & SE23==. & SE24==.
+label var violence "Neighborhood Violence"
+xtile violence_cat = violence, nq(3)
+recode violence_cat (2=3)
+label var violence_cat "Violence Categories"
+label define violence_cat 1"Low" 3"High"
+label value violence_cat violence_cat
 
 *Neighbourhood Disorder
 egen disorder =rowtotal(SE18 SE19 SE20)
 replace disorder =. if SE18==. & SE19==. & SE20==. 
+label var disorder "Neighborhood Disorder"
+xtile disorder_cat = disorder, nq(3)
+recode disorder_cat (2=3)
+label var disorder_cat "Disorder Categories"
+label define disorder_cat 1"Low" 3"High"
+label value disorder_cat disorder_cat
+*-------------------------------------------------------
+*Creating binary Perceived Social Neighborhood Environment (PSNE)
+
+foreach x in SE12 SE13 SE14_reverse SE15 SE16_reverse SE17{
+	gen `x'_cat = .
+	replace `x'_cat = 0 if `x'==1
+	replace `x'_cat = 1 if `x'==2 | `x'==3 | `x'==4
+}
+
+foreach x in SE18 SE19 SE20 SE21 SE22 SE23 SE24{
+	gen `x'_cat = . 
+	replace `x'_cat = 0 if `x'==0
+	replace `x'_cat = 1 if `x'==1 | `x'==2 | `x'==3
+	label define `x'_cat 0"No problem" 1"Problem"
+	label value `x'_cat `x'_cat
+}
+*-------------------------------------------------------
 
 *Car Ownership
 gen car = .
@@ -153,6 +199,33 @@ label variable educ "Education categories"
 label define educ 1 "less than high school" 2 "high school graduate" 3 "associates degree/some college" 4 "college degree"
 label values educ educ 
 
+*Income
+gen income = .
+replace income = 1 if D36W == 1 | D36M == 1 | D36A == 1 
+replace income = 2 if D36W == 2 | D36M == 2 | D36A == 2 
+replace income = 3 if D36W == 3 | D36M == 3 | D36A == 3
+replace income = 4 if D36W == 4 | D36M == 4 | D36A == 4
+replace income = 5 if D36W == 5 | D36M == 5 | D36A == 5
+replace income = 5 if D36W == 6 | D36M == 6 | D36A == 6    
+
+replace income = 1 if D37W == 1 | D37M == 1 | D37A == 1 
+replace income = 2 if D37W == 2 | D37M == 2 | D37A == 2 
+replace income = 3 if D37W == 3 | D37M == 3 | D37A == 3
+replace income = 4 if D37W == 4 | D37M == 4 | D37A == 4
+replace income = 4 if D37W == 5 | D37M == 5 | D37A == 5
+replace income = 5 if D37W == 6 | D37M == 6 | D37A == 6 
+replace income = 5 if D37W == 7 | D37M == 7 | D37A == 7   
+
+replace income = 1 if D38W == 1 | D38M == 1 | D38A == 1 
+replace income = 2 if D38W == 2 | D38M == 2 | D38A == 2 
+replace income = 3 if D38W == 3 | D38M == 3 | D38A == 3 
+replace income = 4 if D38W == 4 | D38M == 4 | D38A == 4 
+replace income = 5 if D38W == 5 | D38M == 5 | D38A == 5 
+
+label var income "Income Categories"
+label define income 1"Low" 2"Low-middle" 3"Middle" 4"High-middle" 5"High"
+label value income income
+*--------------------------------------------------------------------------
 *Active Commuting variables
 gen commute_day = p9
 label var commute_day "Active Commuting (day)"
@@ -160,6 +233,30 @@ label var commute_day "Active Commuting (day)"
 gen commute_wk = p9*p8
 label var commute_wk "Active Commuting (week)"
 
+gen APA = .
+replace APA = 0 if commute_wk==0
+replace APA = 1 if commute_wk>0 & commute_wk!=.
+label var APA "Engaging in Active Commuting"
+label define APA 0"Zero active commuting" 1"Engaging in active commuting"
+label value APA APA
+
+gen commute_cat = . 
+replace commute_cat = 0 if commute_wk==0
+replace commute_cat = 1 if commute_wk >0 & commute_wk<150
+replace commute_cat = 2 if commute_wk>=150 & commute_wk!=.
+label var commute_cat "Active Commuting Categories"
+label define commute_cat 0"Inactive" 1"Insufficiently Active" 2"Active"
+label value commute_cat commute_cat
+
+*---------------------------------------------------------------------------
+gen rec_vig_wk = p11*p12
+label var rec_vig_wk "Recreational Weekly Vigorous PA"
+gen rec_mod_wk = p14*p15
+label var rec_mod_wk "Recreational Weekly Moderate PA"
+egen rec_wk = rowtotal(rec_vig_wk rec_mod_wk)
+label var rec_wk "Overall weekly recreational PA"
+
+*--------------------------------------------------------------------------
 cls
 *Model 2 - Adjusting for Model 1, country site 
 cls
@@ -187,6 +284,21 @@ cls
 logistic inactive1 social_cohesion gender partage bmi i.educ i.residential car i.siteid dia htn, vce(cluster siteid) cformat(%9.2f)
 logistic inactive1 disorder gender partage bmi i.educ i.residential car i.siteid dia htn, vce(cluster siteid) cformat(%9.2f)
 logistic inactive1 violence gender partage bmi i.educ i.residential car i.siteid dia htn, vce(cluster siteid) cformat(%9.2f)
+
+cls
+*Table 1
+tab gender if commute_wk!=.
+
+proportion agegr if commute_wk!=., percent cformat(%9.1f)
+proportion agegr if commute_wk!=., over(gender) percent cformat(%9.1f)
+
+
+proportion siteid if commute_wk!=., percent cformat(%9.1f)
+proportion siteid if commute_wk!=., over(gender) percent cformat(%9.1f)
+
+proportion residential if commute_wk!=., percent cformat(%9.1f)
+proportion residential if commute_wk!=., over(gender) percent cformat(%9.1f)
+
 
 /*
 nbreg walk_wk social_cohesion c.walkscore##car gender partage i.siteid bmi, irr vce(cluster siteid) nolog cformat(%9.3f)
@@ -222,3 +334,8 @@ oneway violence sleep_cat, tab
 mlogit sleep_cat ib3.social_cat i.disorder_cat i.violence_cat i.gender partage bmi i.siteid htn dia physically_active, nolog base(0) rrr vce(cluster siteid)
 
 *restore
+
+
+
+
+
