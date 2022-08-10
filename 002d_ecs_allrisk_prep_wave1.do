@@ -313,6 +313,8 @@ egen fv=rowtotal(NU12 NU13)
 label variable fv "Days on which fruit and veg were eaten"
 **food security
 egen foodsec=rowmean( NU88 NU89 NU90 NU91 NU92 NU93 NU94 NU95 NU96)
+egen foodsec2=rowtotal( NU88 NU89 NU90 NU91 NU92 NU93 NU94 NU95 NU96)
+
 
 ** PHYSICAL INACTIVITY
     ** *********************************************************************************************************************************************************
@@ -820,7 +822,7 @@ dis 16/829
 keep key siteid gender partage stroke chd angina a_rtm mi hf MET_grp predsugnc predssb fruit_per_week veges_week veges_and_fruit_per_week /// 
 age_gr2 female male educ prof semi_prof non_prof binge inactive ht bmi ow ob ob4 fram_sbp fram_sbptreat fram_smoke                        ///
 fram_diab fram_hdl fram_tchol risk10 risk10_cat optrisk10 fram_sex primary_plus second_plus tertiary prof semi_prof non_prof occ  /// 
-bp_diastolic bmirisk10 bmirisk10_cat percsafe hood_score race religious spirit D16 D7 D10 D11 D12 SE25 SE26 promis emotion foodsec totMETmin ///
+bp_diastolic bmirisk10 bmirisk10_cat percsafe hood_score race religious spirit D16 D7 D10 D11 D12 SE25 SE26 promis emotion foodsec foodsec2 totMETmin ///
 depress sleep GH242 GH243 GH244 GH245 GH246 GH247 WHO_nolab WHO_gen WHObmi_cat WHOgen_cat ascvd10 ascvd_cat ascvd2_cat
 
 rename fram_sbp sbp 

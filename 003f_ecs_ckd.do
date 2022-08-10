@@ -23,44 +23,44 @@ cls
 ** Dataset to encrypted location
 
 *WINDOWS OS - Ian & Christina (Data Group)
-*local datapath "X:/The University of the West Indies/DataGroup - repo_data/data_p120"
+local datapath "X:/The University of the West Indies/DataGroup - repo_data/data_p120"
 
 *WINDOWS OS - Kern & Stephanie
 *local datapath "X:/The UWI - Cave Hill Campus/DataGroup - repo_data/data_p120"
 
 *MAC OS - Kern
-local datapath "/Volumes/Secomba/kernrocke/Boxcryptor/The University of the West Indies/DataGroup - data_p120"
+*local datapath "/Volumes/Secomba/kernrocke/Boxcryptor/The University of the West Indies/DataGroup - data_p120"
 
 *-------------------------------------------------------------------------------
 
 ** Logfiles to unencrypted location
 
 *WINDOWS OS - Ian & Christina (Data Group)
-*local logpath "X:/The University of the West Indies/DataGroup - repo_data/data_p120"
+local logpath "X:/The University of the West Indies/DataGroup - repo_data/data_p120"
 
 *WINDOWS OS - Kern & Stephanie
 *local logpath "X:/The UWI - Cave Hill Campus/DataGroup - repo_data/data_p120"
 
 *MAC OS - Kern
-local logpath "/Volumes/Secomba/kernrocke/Boxcryptor/The University of the West Indies/DataGroup - data_p120"
+*local logpath "/Volumes/Secomba/kernrocke/Boxcryptor/The University of the West Indies/DataGroup - data_p120"
 
 *-------------------------------------------------------------------------------
 
 **Aggregated output path
 
 *WINDOWS OS - Ian & Christina (Data Group) 
-*local outputpath "The University of the West Indies/DataGroup - PROJECT_p120"
+local outputpath "The University of the West Indies/DataGroup - PROJECT_p120"
 
 *WINDOWS OS - Kern & Stephanie
 *local outputpath "X:/The UWI - Cave Hill Campus/DataGroup - PROJECT_p120"
 
 *MAC OS - Kern
-local outputpath "/Volumes/Secomba/kernrocke/Boxcryptor/The University of the West Indies/DataGroup - data_p120"	
+*local outputpath "/Volumes/Secomba/kernrocke/Boxcryptor/The University of the West Indies/DataGroup - data_p120"	
 	
 *-------------------------------------------------------------------------------
 
 **Do file path
-local dopath "/Volumes/Secomba/kernrocke/Boxcryptor/OneDrive - The UWI - Cave Hill Campus/Github Repositories/repo_p120"
+*local dopath "/Volumes/Secomba/kernrocke/Boxcryptor/OneDrive - The UWI - Cave Hill Campus/Github Repositories/repo_p120"
 
 
 *Open log file to store results
@@ -351,7 +351,7 @@ pwmean ckd, over(siteid) mcompare(tukey) effects cimeans
 restore
 *-------------------------------------------------------------------------------
 
-*Regression Modelling
+/*Regression Modelling
 
 **Unadjusted
 regress egfr ascvd10 [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)

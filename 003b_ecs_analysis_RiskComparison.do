@@ -3,8 +3,8 @@
     //  algorithm name					ecs_cvdrisk_framingham.do
     //  project:				        Pediatric ECHORN (P-ECS)
     //  analysts:				       	Ian HAMBLETON and Christina Howitt
-    //  algorithm task			                Description of CVD risk according to Framingham General, Fram simplified, ASCVD, WHO general
-    //                                                  and WHO simplified algorithms.
+    //  algorithm task			        Description of CVD risk according to Framingham General, Fram simplified, ASCVD, WHO general
+    //                                  and WHO simplified algorithms.
 
     ** General algorithm set-up
     version 16
@@ -89,9 +89,30 @@ foreach x in frcat frsimcat WHObmi_cat WHOgen_cat ascvd_cat {
                 tab WHOgen_cat_high, miss
                 tab ascvd_cat_high, miss
 
+** This section for making sure we are comparing the same participants
+drop if partage>74 & partage<.
+drop if mi==1 | stroke==1 | angina==1 | chd==1
+drop if race==.
+drop if tchol==. | hdl==. | sbp==. | diab==. | smoke==. | sbptreat==.
+drop if bmi==.
+drop if WHObmi_cat ==.
+
 ** -------------------------------------------------------------------------------------------------------------------- 
-** ** TABLE 1: Mean CVD risk score using 5 different risk algorithms 
-**          Stratified by Age and gender
+** Table 1: Baseline CVD risk factors (demographic, physical, and laboratory characteristics) of the ECHORN cohort
+** --------------------------------------------------------------------------------------------------------------------
+by gender, sort : summarize partage
+by gender, sort : summarize sbp
+by gender, sort : summarize bp_diastolic
+tab sbptreat gender, col
+by gender, sort : summarize bmi
+by gender, sort : summarize tchol
+by gender, sort : summarize hdl
+tab smoke gender, col
+tab diab gender, col
+tab race gender, col
+
+** -------------------------------------------------------------------------------------------------------------------- 
+** ** TABLE 2: Baseline 10-year CVD risk in the ECHORN cohort according to five different risk algorithms (all countries)
 ** -------------------------------------------------------------------------------------------------------------------- 
 ** Framingham general
 mean frrisk10 
@@ -115,7 +136,7 @@ mean WHO_nolab, over(gender)
 mean WHO_nolab, over(age_gr2)
 
 ** -------------------------------------------------------------------------------------------------------------------- 
-** ** TABLE 2: Risk categories using 5 different risk algorithms 
+** ** Supplementary table 1: Risk categories using 5 different risk algorithms 
 **          Stratified by Age and gender
 ** -------------------------------------------------------------------------------------------------------------------- 
 ** Framingham general
@@ -167,7 +188,7 @@ save "`datapath'/version03/02-working/risk_comparison", replace
 
 
 ** -------------------------------------------------------------------------------------------------------------------- 
-** BAR CHART of FRAMINGHAM GENERAL AND SIMPLIFIED versus ASCVD risk score categorizations
+** FIGURE 1: BAR CHART of FRAMINGHAM GENERAL AND SIMPLIFIED versus ASCVD risk score categorizations
 ** -------------------------------------------------------------------------------------------------------------------- 
                 **********************************************************************************************
                 ** STEP 1: CREATE DATASETS THAT CONTAIN THE PREVALENCE OF EACH RISK CATEGORY FOR A SINGLE SCORE
@@ -324,7 +345,7 @@ save "`datapath'/version03/02-working/risk_comparison", replace
                 **********************************************************************************************
                 ** STEP 4: PLOT BAR CHART
                 **********************************************************************************************
-                            label define indicator2 1 "Framingham Simplified" 2 "Framingham General" 3 "ACC/AHA" 4 "WHO general" 5 "WHO simplified"
+                            label define indicator2 1 "Framingham non-lab" 2 "Framingham lab" 3 "AHA/ASCVD" 4 "WHO lab" 5 "WHO non-lab"
                             label values indicator2 indicator2
                             replace low=low*100
                             replace inter=inter*100
@@ -364,11 +385,110 @@ save "`datapath'/version03/02-working/risk_comparison", replace
 
                             graph export "`outputpath'/cvdrisk_categories.png", replace  
 
+** *-------------------------------------------------------------------------------------------------------------------- 
+** ** TABLE 3: Odds of high cardiovascular disease risk (using 5 different calculators) by selected social determinant of health
 ** -------------------------------------------------------------------------------------------------------------------- 
-** ** TABLE 3: Agreement between high risk category of different risk algorithms
-** -------------------------------------------------------------------------------------------------------------------- 
-
 use "`datapath'/version03/02-working/risk_comparison", clear
+
+** Prepare food security categories. There is an inconsistency in how the data was collected. See ECHORN_SURVEY_QUESTIONTREE for details. Should have been scored 0-8, 
+** but was scored 0-9. 
+gen fsec_cat=.
+replace fsec_cat=1 if foodsec2==0
+replace fsec_cat=2 if foodsec2 >= 1 & foodsec2 < 4
+replace fsec_cat=3 if foodsec2 >= 4 & foodsec2 < .
+    * check
+    codebook foodsec2 if fsec_cat==1
+    codebook foodsec2 if fsec_cat==2
+    codebook foodsec2 if fsec_cat==3
+label variable fsec_cat "Food security categories"
+label define fsec_cat 1 "food secure" 2 "mild food insecurity" 3 "moderate/severe food insecurity" 
+label values fsec_cat fsec_cat
+** for table
+tab fsec_cat
+
+
+** income categories: split into tertiles
+xtile inc3 = D7, nq(3)
+codebook D7 if inc3==1
+codebook D7 if inc3==2
+codebook D7 if inc3==3
+** for table
+tab inc3
+
+* education
+tab educ
+
+** REGRESSION WITH HIGH RISK AS OUTCOME; SDoH as predictor; age and gender controlled
+** Framingham simplified
+logistic frsimcat_high i.fsec_cat partage gender
+logistic frsimcat_high i.inc3 partage gender
+logistic frsimcat_high i.educ partage gender
+logistic frsimcat_high i.occ partage gender
+
+** Framingham general
+logistic frcat_high i.fsec_cat partage gender
+logistic frcat_high i.inc3 partage gender
+logistic frcat_high i.educ partage gender
+logistic frcat_high i.occ partage gender
+
+** ASCVD
+logistic ascvd_cat_high i.fsec_cat partage gender
+logistic ascvd_cat_high i.inc3 partage gender
+logistic ascvd_cat_high i.educ partage gender
+logistic ascvd_cat_high i.occ partage gender
+
+** WHO general
+logistic WHOgen_cat_high i.fsec_cat partage gender
+logistic WHOgen_cat_high i.inc3 partage gender
+logistic WHOgen_cat_high i.educ partage gender
+logistic WHOgen_cat_high i.occ partage gender
+
+** WHO simplified
+logistic WHObmi_cat_high i.fsec_cat partage gender
+logistic WHObmi_cat_high i.inc3 partage gender
+logistic WHObmi_cat_high i.educ partage gender
+logistic WHObmi_cat_high i.occ partage gender
+
+
+/*This format for the table showing: "Baseline 10-year CVD risk categorization in the ECHORN cohort according to five different risk algorithms (all countries) 
+  stratified by key social determinants of health" removed on 13th August 2021. There is a need to control for at least age and gender 
+
+**Perceived income relative to rest of population
+mean D7, over(frsimcat)
+mean D7, over(frcat)
+mean D7, over(ascvd_cat)
+mean D7, over(WHOgen_cat)
+mean D7, over(WHObmi_cat)
+
+** Mean food security score 
+mean foodsec2, over(frsimcat)
+mean foodsec2, over(frcat)
+mean foodsec2, over(ascvd_cat)
+mean foodsec2, over(WHOgen_cat)
+mean foodsec2, over(WHObmi_cat)
+
+**education
+tab educ frsimcat, row chi2
+tab educ frcat, row chi2
+tab educ ascvd_cat, row chi2
+tab educ WHOgen_cat, row chi2
+tab educ WHObmi_cat, row chi2
+
+*occupation
+tab occ frsimcat, row chi2
+tab occ frcat, row chi2
+tab occ ascvd_cat, row chi2
+tab occ WHOgen_cat, row chi2
+tab occ WHObmi_cat, row chi2
+
+
+local c_date = c(current_date)
+local date_string = subinstr("`c_date'", " ", "", .)
+save "`datapath'\version01\2-working\test_`date_string'", replace
+
+** -------------------------------------------------------------------------------------------------------------------- 
+** ** TABLE 4: Agreement between high risk category of different risk algorithms
+** -------------------------------------------------------------------------------------------------------------------- 
 
 tab frcat_high frsimcat_high
 kapci frcat_high frsimcat_high 
@@ -397,15 +517,3 @@ kapci WHOgen_cat_high WHObmi_cat_high
 ** -------------------------------------------------------------------------------------------------------------------- 
 pwcorr frrisk10 frsim10 WHO_nolab WHO_gen ascvd10
 
-**Participant characteristics
-
-mean partage, over(gender)
-by gender, sort : summarize partage
-by gender, sort : summarize sbp
-by gender, sort : summarize bp_diastolic
-tab sbptreat gender, col
-by gender, sort : summarize bmi
-by gender, sort : summarize tchol
-by gender, sort : summarize hdl
-tab smoke gender, col
-tab diab gender, col

@@ -44,7 +44,7 @@ rename partage age
 ** REGRESSION: PROGRESS+ SOCIAL DETERMINANTS AND CVD RISK
 **---------------------------------------------------------------------------------------------------------------------
 
-*/* REGRESSIONS: UNIVARIATE, THEN WITH FRAMINGHAM COMPONENTS
+** REGRESSIONS: UNIVARIATE, THEN WITH FRAMINGHAM COMPONENTS
 regress frsim10 hood_score
         regress frsim10 hood_score i.siteid 
                 regress frsim10 hood_score age sbp bmi i.smoke i.diab i.gender i.sbptreat i.siteid 
