@@ -6,7 +6,7 @@ cls
 	**	Sub-Project:	Chronic Kidney Disease
 	**  Analyst:		Kern Rocke
 	**	Date Created:	03/05/2021
-	**	Date Modified:  18/05/2021
+	**	Date Modified:  31/05/2021
 	**  Algorithm Task: Creating CKD variables for analysis
 
     ** General algorithm set-up
@@ -82,26 +82,51 @@ merge 1:1 key using "`datapath'/version03/01-input/cdrc_ckd.dta", nogenerate
 *Remove participants with missing creatinine information
 keep if creatinine != .
 
+*Create ethnicity variable
+gen race = .
+replace race = 1 if D4A==1 // white
+replace race = 2 if D4B==1 // black
+replace race = 2 if D4C==1 // caribbean
+replace race = 3 if D4D==1 // asian
+replace race = 4 if D4E==1 // east indian
+replace race = 5 if D4F==1 // hispanic
+replace race = 6 if D4G==1 // mixed
+replace race = 7 if D4H==1 // other race 
+replace race = 5 if D4I==1 // puerto rican
+
+label var race "Ethnicity"
+label define race 1"White" 2"Black/Caribbean" 3"Asian" 4"East Indian" 5"Hispanic" 6"Mixed" 7"Other"
+label value race race
+
+
 
 *Create eGFR using CKD-EPI equation
+*Black ehtnicity
 gen egfr = . 
-replace egfr = 163*(creatinine /0.9)^-1.209*(0.993)^partage if gender==1 & creatinine >0.9 & creatinine !=.
-replace egfr = 163*(creatinine /0.9)^-0.411*(0.993)^partage if gender==1 & creatinine <=0.9 & creatinine !=.
-replace egfr = 166*(creatinine /0.7)^-1.209*(0.993)^partage if gender==2 & creatinine >0.7 & creatinine !=.
-replace egfr = 166*(creatinine /0.7)^-0.329*(0.993)^partage if gender==2 & creatinine <=0.7 & creatinine !=.
+replace egfr = 163*(creatinine /0.9)^-1.209*(0.993)^partage if gender==1 & creatinine >0.9 & creatinine !=. & race == 2
+replace egfr = 163*(creatinine /0.9)^-0.411*(0.993)^partage if gender==1 & creatinine <=0.9 & creatinine !=. & race == 2
+replace egfr = 166*(creatinine /0.7)^-1.209*(0.993)^partage if gender==2 & creatinine >0.7 & creatinine !=. & race == 2
+replace egfr = 166*(creatinine /0.7)^-0.329*(0.993)^partage if gender==2 & creatinine <=0.7 & creatinine !=. & race == 2
+
+*White or other ethnicity
+replace egfr = 141*(creatinine /0.9)^-1.209*(0.993)^partage if gender==1 & creatinine >0.9 & creatinine !=. & race != 2
+replace egfr = 141*(creatinine /0.9)^-0.411*(0.993)^partage if gender==1 & creatinine <=0.9 & creatinine !=. & race != 2
+replace egfr = 144*(creatinine /0.7)^-1.209*(0.993)^partage if gender==2 & creatinine >0.7 & creatinine !=. & race != 2
+replace egfr = 144*(creatinine /0.7)^-0.329*(0.993)^partage if gender==2 & creatinine <=0.7 & creatinine !=. & race != 2
+
 label var egfr"Estimated Glomerular Filtration Rate"
 
 mean egfr, over(siteid)
 
 
-**MDRD
+/**MDRD
 gen gfr_MDRD=.
 replace gfr_MDRD = 175*(creatinine^-1.154)*partage^-0.203 * 1.210 * 0.742 if gender==2 & creatinine !=.
 replace gfr_MDRD = 175*(creatinine^-1.154)*partage^-0.203 * 1.210  if gender==1 & creatinine !=.
 label var gfr_MDRD "MDRD"
 
 mean gfr_MDRD, over(siteid)
-
+*/
 
 *Low renal function
 gen low_renal = .
@@ -122,10 +147,10 @@ label var micro "Microalbuminuria"
 label define micro 0"Normal" 1"Microalbuminuria"
 label value micro micro
 
-*Chronic Kideny Disease
+*Chronic Kideny Disease (Albuminuria removed)
 gen ckd =. 
 replace ckd = 0 if low_renal == 0 
-replace ckd = 1 if low_renal == 1 | micro == 1
+replace ckd = 1 if low_renal == 1 
 label var ckd "Chronic Kidney Disease"
 label define ckd 0"Normal" 1"CKD"
 label value ckd ckd
@@ -317,11 +342,11 @@ gen ckd_male = ckd if gender==1
 gen ckd_female = ckd if gender==2
 
 #delimit;
-graph bar (mean) ckd_male ckd_female ckd [pweight = svy_weight] , 
+graph bar (mean) ckd_male ckd_female ckd [pweight = svy_weight], 
 
 	over(siteid) blabel(bar, format(%9.2f)) 
 	
-	ylab(0(2)14, angle(verticle) nogrid)
+	ylab(0(2)12, angle(verticle) nogrid)
 	
 	bar(1, fcolor(blue) fintensity(inten70) lcolor(black)) 
 	bar(2, fcolor(red) fintensity(inten70) lcolor(black))
@@ -355,18 +380,46 @@ restore
 
 **Unadjusted
 regress egfr ascvd10 [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
-regress egfr ascvd_cat [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
+regress egfr i.ascvd_cat [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
 
 logistic ckd ascvd10 [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
-logistic ckd ascvd10_cat [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
+logistic ckd i.ascvd_cat [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
 
 *Adjusted
 regress egfr ascvd10 i.gender partage bmi i.educ htn diab_hba1c i.MET_grp i.HB24  [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
-regress egfr ascvd_cat i.gender partage bmi i.educ htn diab_hba1c i.MET_grp i.HB24  [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
+regress egfr i.ascvd_cat i.gender partage bmi i.educ htn diab_hba1c i.MET_grp i.HB24  [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
 
 logistic ckd ascvd10 i.gender partage bmi i.educ htn diab_hba1c i.MET_grp i.HB24  [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
-logistic ckd ascvd_cat i.gender partage bmi i.educ htn diab_hba1c i.MET_grp i.HB24  [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
+logistic ckd i.ascvd_cat i.gender partage bmi i.educ htn diab_hba1c i.MET_grp i.HB24  [pw=svy_weight] , vce(cluster siteid) cformat(%9.2f)
 
 *-------------------------------------------------------------------------------
+
+
+*Examine differences in serum creatinine between methods
+***Note: Differences are done by country because no Point of Care measurements were done for Puerto Rico
+
+tab method siteid
+
+*USVI
+ttest creatinine if site==1, by(method)
+*Barbados
+ttest creatinine if site==3, by(method)
+*Trinidad
+ttest creatinine if site==4, by(method)
+
+
+/*No significant diffrences between creatinine method type (labortory vs Point of Care) by country
+
+Note: Re-run regression models by method type for senstivity analysis
+*/
+
+
+*Senstivity Analysis Regression models
+*Lab Creatinine
+logistic ckd i.ascvd_cat i.gender partage bmi i.educ htn diab_hba1c i.MET_grp i.HB24  [pw=svy_weight] if method ==1, vce(cluster siteid) cformat(%9.2f)
+*Point of Care Creatinine
+logistic ckd i.ascvd_cat i.gender partage bmi i.educ htn diab_hba1c i.MET_grp i.HB24  [pw=svy_weight] if method ==2, vce(cluster siteid) cformat(%9.2f)
+
+
 
 
