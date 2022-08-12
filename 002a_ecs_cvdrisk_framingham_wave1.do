@@ -6,7 +6,7 @@
     //  algorithm task			        implementing the Framingham CVD risk score.
 
     ** General algorithm set-up
-    version 16
+    version 17
     clear all
     macro drop _all
     set more 1
@@ -174,9 +174,15 @@ rename heightm height
 label variable height "height in m"
 gen bmi=weight/(height*height)
 
+* rename previous CVD diagnosis variables
+rename GH29D mi
+rename GH32 stroke
+rename GH29B angina
+rename GH29A chd
+
 
 ** Keep only what is needed
-keep key gender partage sbp sbptreat smoke diab hdl_mg tchol_mg bp_diastolic bmi
+keep key gender partage sbp sbptreat smoke diab hdl_mg tchol_mg bp_diastolic bmi mi stroke angina chd 
 
 ** --------------------------------------------
 ** PART 2. Setting your CVD model inputs 
@@ -247,7 +253,7 @@ label var fram_bmi "Participant BMI (in kg/m2)"
 gen `bmi' = fram_bmi
 
 ** Keep Framingham variables only 
-keep key fram_* optimal_* `female' `age' `sbp' `smoke' `diab' `trhtn' `bmi' `chol' `hdl'
+keep key fram_* optimal_* `female' `age' `sbp' `smoke' `diab' `trhtn' `bmi' `chol' `hdl' mi stroke angina chd 
 
 ** --------------------------------------------
 ** PART 3. Calculate Risk

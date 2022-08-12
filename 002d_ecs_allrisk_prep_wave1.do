@@ -753,7 +753,7 @@ rename GH32 stroke
 rename GH29B angina
 rename GH29A chd
 rename GH29C a_rtm
-rename GH29E hf
+rename GH29E hf 
 
 
 ***************************************************************

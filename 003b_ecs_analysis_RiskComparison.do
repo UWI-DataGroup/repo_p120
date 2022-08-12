@@ -89,13 +89,48 @@ foreach x in frcat frsimcat WHObmi_cat WHOgen_cat ascvd_cat {
                 tab WHOgen_cat_high, miss
                 tab ascvd_cat_high, miss
 
-** This section for making sure we are comparing the same participants
+
+***************************************************************************************************************
+* ADDED ON 11 AUG 2022: ASSESSMENT OF RISK ON ALL AVAILABLE PARTICIPANTS
+* exclusions for each calculator must be applied one by one
+***************************************************************************************************************
+/**Framingham. age, sex, smoking, systolic blood pressure, blood pressure treatment, total cholesterol, HDL cholesterol, diabetes 
 drop if partage>74 & partage<.
 drop if mi==1 | stroke==1 | angina==1 | chd==1
-drop if race==.
 drop if tchol==. | hdl==. | sbp==. | diab==. | smoke==. | sbptreat==.
-drop if bmi==.
-drop if WHObmi_cat ==.
+mean frrisk10
+
+**Framingham non-lab. Requires Age, sex, smoking, systolic blood pressure, blood pressure treatment, diabetes, BMI
+drop if partage>74 & partage<.
+drop if mi==1 | stroke==1 | angina==1 | chd==1
+drop if smoke==. | sbp==. | sbptreat==. | diab==. | bmi==.
+mean frsim10
+
+** ASCVD. requires Age, sex, smoking, systolic blood pressure, blood pressure treatment, total cholesterol, HDL cholesterol, diabetes, race 
+drop if partage>74 & partage<.
+drop if mi==1 | stroke==1 | angina==1 | chd==1
+drop if smoke==. | sbp==. | sbptreat==. | tchol==. | hdl==. | diab==. | race==.
+mean ascvd10
+
+** WHO general. age, sex, smoking, systolic blood pressure, total cholesterol, diabetes
+drop if partage>74 & partage<.
+drop if mi==1 | stroke==1 | angina==1 | chd==1
+drop if smoke==. | tchol==. | diab==.
+mean WHO_gen
+
+** WHO simplified. Age, sex, smoking, systolic blood pressure, BMI
+drop if partage>74 & partage<.
+drop if mi==1 | stroke==1 | angina==1 | chd==1
+drop if smoke==. | sbp==. | bmi==.
+mean WHO_nolab
+*/
+
+***************************************************************************************************************
+** This section for making sure we are comparing the same participants so applies exclusions for all calculators
+***************************************************************************************************************
+drop if partage>74 & partage<.
+drop if mi==1 | stroke==1 | angina==1 | chd==1
+drop if tchol==. | hdl==. | sbp==. | diab==. | smoke==. | sbptreat==. | race==. | bmi==.| WHObmi_cat ==.
 
 ** -------------------------------------------------------------------------------------------------------------------- 
 ** Table 1: Baseline CVD risk factors (demographic, physical, and laboratory characteristics) of the ECHORN cohort
