@@ -24,7 +24,7 @@ cap log using "`logpath'\ecs_progress_rf", replace
 **Open dataset
 use "`datapath'\version02\2-working\survey_wave1_weighted", clear 
 
-*********************************************************************************************************************************************************
+/*********************************************************************************************************************************************************
 *   DESCRIPTION OF GENDER IN ECHORN DATASET 
 *********************************************************************************************************************************************************
 tab gender siteid, col miss
@@ -1023,15 +1023,10 @@ svy: tab GH184 gender if siteid==2, miss perc col
 svy: tab GH184 gender if siteid==3, miss perc col 
 *Trinidad
 svy: tab GH184 gender if siteid==4, miss perc col 
-<<<<<<< Updated upstream
-
-
-
-
-
-
-
-*svyset, clear
-=======
 svyset, clear
->>>>>>> Stashed changes
+
+
+
+save "`datapath'\version02\2-working\survey_wave1_weighted_RFs", replace 
+
+

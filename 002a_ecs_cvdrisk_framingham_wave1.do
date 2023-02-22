@@ -181,7 +181,7 @@ rename GH29B angina
 rename GH29A chd
 
 
-** Keep only what is needed
+*/* Keep only what is needed
 keep key gender partage sbp sbptreat smoke diab hdl_mg tchol_mg bp_diastolic bmi mi stroke angina chd 
 
 ** --------------------------------------------
