@@ -182,12 +182,25 @@ label value htn htn
 gen obese = .
 replace obese = 1 if bmi>=30 & bmi!=.
 replace obese = 0 if bmi<30
+label var obese "Obesity"
+label define obese 0"Non-obese" 1"Obese"
+label value obese obese
+
+*BMI Categories
+gen bmi_cat = .
+replace bmi_cat = 0 if bmi>=18.50 & bmi<25
+replace bmi_cat = 1 if bmi<18.50
+replace bmi_cat = 2 if bmi>=25 & bmi!=.
+label var bmi_cat "BMI categories"
+label define bmi_cat 0"Normal" 1"Underweight" 2"Overweight/Obese"
+label value bmi_cat bmi_cat
 
 *Resident Status
 gen residential = .
 replace residential = 1 if D75 == 0 
 replace residential = 2 if D75 == 1
 replace residential = 3 if D75 == 2 | D75 == 3 | D75 == 4
+label var residential "Residential status"
 
 *Education
 gen educ=.
@@ -287,20 +300,174 @@ logistic inactive1 violence gender partage bmi i.educ i.residential car i.siteid
 
 cls
 *Table 1
-tab gender if commute_wk!=.
+tab gender 
 
-proportion agegr if commute_wk!=., percent cformat(%9.1f)
-proportion agegr if commute_wk!=., over(gender) percent cformat(%9.1f)
+proportion agegr if commute_wk !=., cformat(%9.1f)
+proportion educ if commute_wk !=., cformat(%9.1f)
+proportion income if commute_wk !=., cformat(%9.1f)
+proportion residential if commute_wk !=., cformat(%9.1f)
+proportion car if commute_wk !=., cformat(%9.1f)
+proportion bmi_cat if commute_wk !=., cformat(%9.1f)
+proportion siteid if commute_wk !=., cformat(%9.1f)
+
+proportion agegr if commute_wk !=., over(gender) percent cformat(%9.1f)
+proportion educ if commute_wk !=., over(gender) percent cformat(%9.1f)
+proportion income if commute_wk !=., over(gender) percent cformat(%9.1f)
+proportion residential if commute_wk !=., over(gender) percent cformat(%9.1f)
+proportion car if commute_wk !=., over(gender) percent cformat(%9.1f)
+proportion bmi_cat if commute_wk !=., over(gender) percent cformat(%9.1f)
+proportion siteid if commute_wk !=., over(gender) percent cformat(%9.1f)
 
 
-proportion siteid if commute_wk!=., percent cformat(%9.1f)
-proportion siteid if commute_wk!=., over(gender) percent cformat(%9.1f)
+*-------------------------------------------------------------------------------
+*-------------------------------------------------------------------------------
+*-------------------------------------------------------------------------------
 
-proportion residential if commute_wk!=., percent cformat(%9.1f)
-proportion residential if commute_wk!=., over(gender) percent cformat(%9.1f)
+*Table 2
+
+*Social Cohesion social_cohesion
+
+mean social_cohesion if commute_wk !=.
+ttest social_cohesion if commute_wk !=., by(gender)
+foreach x of varlist SE12_cat SE13_cat SE14_reverse_cat SE15_cat SE16_reverse_cat SE17_cat{
+	
+	proportion `x' if commute_wk !=., percent cformat(%9.1f)
+	proportion `x' if commute_wk !=., over(gender) percent cformat(%9.1f)
+}
+
+*Disorder
+
+mean disorder if commute_wk !=., cformat(%9.1f)
+ttest disorder if commute_wk !=., by(gender) cformat(%9.1f)
+foreach x of varlist SE18_cat SE19_cat SE20_cat {
+	
+	proportion `x' if commute_wk !=., percent cformat(%9.1f)
+	proportion `x' if commute_wk !=., over(gender) percent cformat(%9.1f)
+}
+
+*Violence
+
+mean violence if commute_wk !=., cformat(%9.1f)
+ttest violence if commute_wk !=., by(gender) cformat(%9.1f)
+foreach x of varlist SE21_cat SE22_cat SE23_cat SE24_cat {
+	
+	proportion `x' if commute_wk !=., percent cformat(%9.1f)
+	proportion `x' if commute_wk !=., over(gender) percent cformat(%9.1f)
+}
+
+*-------------------------------------------------------------------------------
+*-------------------------------------------------------------------------------
+*-------------------------------------------------------------------------------
+
+*Table 3
+
+mean commute_wk if commute_wk !=., cformat(%9.1f)
+ttest commute_wk if commute_wk !=., by(gender) cformat(%9.1f)
+
+mean rec_wk if commute_wk !=., cformat(%9.1f)
+ttest rec_wk if commute_wk !=., by(gender) cformat(%9.1f)
+
+proportion commute_cat if commute_wk !=., percent cformat(%9.1f)
+proportion commute_cat if commute_wk !=., over(gender) percent cformat(%9.1f)
+
+proportion inactive if commute_wk !=., percent cformat(%9.1f)
+proportion inactive if commute_wk !=., over(gender) percent cformat(%9.1f)
+
+*-------------------------------------------------------------------------------
+*-------------------------------------------------------------------------------
+*-------------------------------------------------------------------------------
+
+* Time spent commuting - Tobit regression
+
+***Unadjusted Models
+
+*Overall (Both Male and Femle)
+foreach x of varlist social_cat disorder_cat violence_cat {	
+	tobit commute_wk i.`x', vce(cluster siteid) ll(0) nolog cformat(%9.1f)
+}
+
+
+*Male
+foreach x of varlist social_cat disorder_cat violence_cat {	
+	tobit commute_wk i.`x' if gender == 1, vce(cluster siteid) ll(0) nolog cformat(%9.1f)
+}
+
+*Female
+foreach x of varlist social_cat disorder_cat violence_cat {	
+	tobit commute_wk i.`x' if gender == 2, vce(cluster siteid) ll(0) nolog cformat(%9.1f)
+}
+
+
+***Multivariable Adjusted models 
+
+*Overall (Both Male and Femle)
+foreach x of varlist social_cat disorder_cat violence_cat {	
+	tobit commute_wk i.`x' gender partage i.educ bmi car i.residential totMETmin income siteid, vce(cluster siteid) ll(0) nolog cformat(%9.1f)
+}
+
+
+*Male
+foreach x of varlist social_cat disorder_cat violence_cat {	
+	tobit commute_wk i.`x' partage i.educ bmi car i.residential totMETmin income siteid if gender == 1, vce(cluster siteid) ll(0) nolog cformat(%9.1f)
+}
+
+*Female
+foreach x of varlist social_cat disorder_cat violence_cat {	
+	tobit commute_wk i.`x' partage i.educ bmi car i.residential totMETmin income siteid if gender == 2, vce(cluster siteid) ll(0) nolog cformat(%9.1f)
+}
+
+
+*-------------------------------------------------------------------------------
+*-------------------------------------------------------------------------------
+*-------------------------------------------------------------------------------
+
+
+
+*Active Transport Categories - Multinomial logistic regression
+
+***Unadjusted Models
+
+*Overall (Both Male and Female)
+foreach x of varlist social_cat disorder_cat violence_cat {	
+	mlogit commute_cat i.`x', vce(cluster siteid) cformat(%9.2f) rrr base(0) nolog
+}
+*-------------------------------------------------------------------------------	
+*Male
+foreach x of varlist social_cat disorder_cat violence_cat {
+	mlogit commute_cat i.`x' if gender == 1, vce(cluster siteid) cformat(%9.2f) rrr base(0) nolog
+}
+*-------------------------------------------------------------------------------		
+*Female
+foreach x of varlist social_cat disorder_cat violence_cat {
+	mlogit commute_cat i.`x' if gender == 2, vce(cluster siteid) cformat(%9.2f) rrr base(0) nolog
+	}
+*-------------------------------------------------------------------------------	
+
+
+
+***Multivariable Adjusted models - Table 4
+
+*Overall (Both Male and Female)
+foreach x of varlist social_cat disorder_cat violence_cat {	
+	mlogit commute_cat i.`x' gender partage i.educ bmi car i.residential totMETmin income siteid, vce(cluster siteid) cformat(%9.2f) rrr base(0) nolog
+}
+*-------------------------------------------------------------------------------	
+*Male
+foreach x of varlist social_cat disorder_cat violence_cat {
+	mlogit commute_cat i.`x' partage i.educ bmi car i.residential totMETmin income siteid if gender == 1, vce(cluster siteid) cformat(%9.2f) rrr base(0) nolog
+}
+*-------------------------------------------------------------------------------		
+*Female
+foreach x of varlist social_cat disorder_cat violence_cat {
+	mlogit commute_cat i.`x' partage i.educ bmi car i.residential totMETmin income siteid if gender == 2, vce(cluster siteid) cformat(%9.2f) rrr base(0) nolog
+	}
+*-------------------------------------------------------------------------------	
+
 
 
 /*
+IGNORE
+
 nbreg walk_wk social_cohesion c.walkscore##car gender partage i.siteid bmi, irr vce(cluster siteid) nolog cformat(%9.3f)
 nbreg walk_wk disorder c.walkscore##car gender partage i.siteid bmi, irr vce(cluster siteid) nolog cformat(%9.3f)
 nbreg walk_wk violence c.walkscore##car gender partage i.siteid bmi, irr vce(cluster siteid) nolog cformat(%9.3f)
